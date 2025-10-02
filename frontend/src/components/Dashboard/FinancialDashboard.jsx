@@ -1,0 +1,829 @@
+import React, { useState, useEffect } from 'react';
+import { 
+  DollarSign, 
+  TrendingUp, 
+  TrendingDown,
+  CreditCard,
+  Building2,
+  ArrowUpRight,
+  ArrowDownRight,
+  Plus,
+  Filter,
+  Download,
+  Eye
+} from 'lucide-react';
+
+const FinancialDashboard = ({ onNavigate, bankAccounts, recentTransactions, initialTab = 'overview' }) => {
+  const [activeTab, setActiveTab] = useState(initialTab);
+  const [dashboardData, setDashboardData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [showAddInvestmentModal, setShowAddInvestmentModal] = useState(false);
+  const [showCashWithdrawalModal, setShowCashWithdrawalModal] = useState(false);
+  const [showLiquidityForecastModal, setShowLiquidityForecastModal] = useState(false);
+  const [showFilterModal, setShowFilterModal] = useState(false);
+  const [showAddBankAccountModal, setShowAddBankAccountModal] = useState(false);
+  const [showDepositFundsModal, setShowDepositFundsModal] = useState(false);
+  const [showWithdrawFundsModal, setShowWithdrawFundsModal] = useState(false);
+  const [showBankReconciliationModal, setShowBankReconciliationModal] = useState(false);
+
+  // Update activeTab when initialTab changes
+  useEffect(() => {
+    setActiveTab(initialTab);
+  }, [initialTab]);
+
+  // Fetch dashboard data on component mount
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/api/dashboard/financial');
+        if (response.ok) {
+          const data = await response.json();
+          setDashboardData(data);
+        }
+      } catch (error) {
+        console.error('Error fetching financial dashboard data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="p-6 space-y-6 bg-gray-50 min-h-full flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading financial dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!dashboardData) {
+    return (
+      <div className="p-6 space-y-6 bg-gray-50 min-h-full flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-600">Failed to load dashboard data</p>
+        </div>
+      </div>
+    );
+  }
+
+  const financialStats = [
+    {
+      title: "Total Assets",
+      value: `₹${dashboardData.stats.totalAssets.toLocaleString()}`,
+      change: "+5.2%",
+      trend: "up",
+      icon: DollarSign,
+      color: "from-green-500 to-emerald-600"
+    },
+    {
+      title: "Monthly Revenue",
+      value: `₹${dashboardData.stats.monthlyRevenue.toLocaleString()}`,
+      change: "+12.3%",
+      trend: "up",
+      icon: TrendingUp,
+      color: "from-blue-500 to-cyan-600"
+    },
+    {
+      title: "Outstanding Payments",
+      value: `₹${dashboardData.stats.outstandingPayments.toLocaleString()}`,
+      change: "-8.1%",
+      trend: "down",
+      icon: CreditCard,
+      color: "from-orange-500 to-red-600"
+    },
+    {
+      title: "Bank Accounts",
+      value: dashboardData.stats.bankAccounts.toString(),
+      change: "+1",
+      trend: "up",
+      icon: Building2,
+      color: "from-purple-500 to-violet-600"
+    }
+  ];
+
+
+  const tabs = [
+    { id: 'overview', label: 'Overview' },
+    { id: 'payments', label: 'Payments' },
+    { id: 'treasury', label: 'Treasury' },
+    { id: 'banking', label: 'Banking' }
+  ];
+
+  return (
+    <>
+      <div className="p-6 space-y-6 bg-gray-50 min-h-full">
+      {/* Tabs */}
+      <div className="border-b border-gray-200">
+        <nav className="flex space-x-8">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
+                activeTab === tab.id
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </nav>
+      </div>
+
+      {/* ================== TAB CONTENT ================== */}
+
+      {/* Overview */}
+      {activeTab === 'overview' && (
+        <>
+          {/* Stats Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {financialStats.map((stat, index) => {
+              const Icon = stat.icon;
+              return (
+                <div key={index} className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">
+                        {stat.title}
+                      </p>
+                      <p className="text-2xl font-bold text-gray-900 mt-1">
+                        {stat.value}
+                      </p>
+                      <div className="flex items-center space-x-1 mt-1">
+                        {stat.trend === 'up' ? (
+                          <ArrowUpRight className="w-4 h-4 text-green-600" />
+                        ) : (
+                          <ArrowDownRight className="w-4 h-4 text-red-600" />
+                        )}
+                        <p className={`text-sm font-medium ${
+                          stat.trend === 'up' ? 'text-green-600' : 'text-red-600'
+                        }`}>
+                          {stat.change}
+                        </p>
+                      </div>
+                    </div>
+                    <div className={`w-12 h-12 bg-gradient-to-r ${stat.color} rounded-lg flex items-center justify-center`}>
+                      <Icon className="w-6 h-6 text-white" />
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Recent Transactions & Bank Accounts */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Recent Transactions */}
+            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold text-slate-800">Recent Transactions</h2>
+                <button
+                  onClick={() => setShowFilterModal(true)}
+                  className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center space-x-1"
+                >
+                  <Filter className="w-4 h-4" />
+                  <span>Filter</span>
+                </button>
+              </div>
+              <div className="space-y-4">
+                {recentTransactions.map((transaction) => (
+                  <div key={transaction.id} className="flex items-center justify-between p-3 rounded-lg hover:bg-slate-50 transition-colors">
+                    <div className="flex items-center space-x-3">
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                        transaction.type === 'payment' ? 'bg-red-100' :
+                        transaction.type === 'transfer' ? 'bg-blue-100' :
+                        'bg-green-100'
+                      }`}>
+                        {transaction.type === 'payment' ? (
+                          <ArrowDownRight className="w-4 h-4 text-red-600" />
+                        ) : transaction.type === 'transfer' ? (
+                          <ArrowUpRight className="w-4 h-4 text-blue-600" />
+                        ) : (
+                          <TrendingUp className="w-4 h-4 text-green-600" />
+                        )}
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">{transaction.description}</p>
+                        <p className="text-xs text-gray-500">{transaction.account} • {transaction.date}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className={`text-sm font-medium ${
+                        transaction.type === 'deposit' ? 'text-green-600' : 'text-gray-900'
+                      }`}>
+                        {transaction.type === 'deposit' ? '+' : '-'}{`₹${parseFloat(transaction.amount).toLocaleString()}`}
+                      </p>
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                        transaction.status === 'completed' ? 'bg-green-100 text-green-800' :
+                        transaction.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}>
+                        {transaction.status}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Bank Accounts */}
+            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold text-slate-800">Bank Accounts</h2>
+                <button
+                  onClick={() => onNavigate('banking')}
+                  className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center space-x-1"
+                >
+                  <Eye className="w-4 h-4" />
+                  <span>View All</span>
+                </button>
+              </div>
+              <div className="space-y-4">
+                {bankAccounts.map((account, index) => (
+                  <div key={index} className="p-4 rounded-lg border border-gray-200 hover:bg-slate-50 transition-colors">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium">{account.name}</p>
+                        <p className="text-xs text-gray-500">{account.bank} • {account.type}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-lg font-bold">{`₹${parseFloat(account.balance || 0).toLocaleString()}`}</p>
+                        <p className="text-xs text-gray-500">{account.currency}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Quick Actions */}
+          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+            <h2 className="text-lg font-semibold mb-4">Quick Actions</h2>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <button
+                onClick={() => onNavigate('payments')}
+                className="p-4 rounded-lg border hover:bg-slate-50 transition-colors text-center"
+              >
+                <DollarSign className="w-6 h-6 text-green-600 mx-auto mb-2" />
+                <p className="text-sm font-medium">Process Payment</p>
+              </button>
+              <button
+                onClick={() => onNavigate('treasury')}
+                className="p-4 rounded-lg border hover:bg-slate-50 transition-colors text-center"
+              >
+                <CreditCard className="w-6 h-6 text-blue-600 mx-auto mb-2" />
+                <p className="text-sm font-medium">Transfer Funds</p>
+              </button>
+              <button
+                onClick={() => onNavigate('banking')}
+                className="p-4 rounded-lg border hover:bg-slate-50 transition-colors text-center"
+              >
+                <Building2 className="w-6 h-6 text-purple-600 mx-auto mb-2" />
+                <p className="text-sm font-medium">Bank Statement</p>
+              </button>
+              <button
+                onClick={() => onNavigate('financial-reports')}
+                className="p-4 rounded-lg border hover:bg-slate-50 transition-colors text-center"
+              >
+                <TrendingUp className="w-6 h-6 text-orange-600 mx-auto mb-2" />
+                <p className="text-sm font-medium">Financial Report</p>
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Payments */}
+{activeTab === 'payments' && (
+  <div className="bg-white p-6 rounded-xl shadow-sm border space-y-6">
+    <h2 className="text-xl font-semibold">Payments</h2>
+    <p className="text-gray-600">Manage outgoing and incoming payments, track status, and generate reports.</p>
+
+    {/* Payment Form */}
+    <div className="border p-4 rounded-lg space-y-4">
+      <h3 className="font-medium text-gray-800">Process New Payment</h3>
+      <form className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Payee / Vendor</label>
+          <input type="text" placeholder="Enter payee name" className="mt-1 block w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500" />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Amount</label>
+          <input type="number" placeholder="Enter amount" className="mt-1 block w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500" />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Select Bank Account</label>
+          <select className="mt-1 block w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500">
+            {bankAccounts.map((account, index) => (
+              <option key={index} value={account.name}>{account.name} ({`₹${parseFloat(account.balance || 0).toLocaleString()}`})</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Payment Date</label>
+          <input type="date" className="mt-1 block w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500" />
+        </div>
+        <div className="md:col-span-2">
+          <label className="block text-sm font-medium text-gray-700">Description</label>
+          <textarea placeholder="Payment details" className="mt-1 block w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500"></textarea>
+        </div>
+        <div className="md:col-span-2 flex justify-end">
+          <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+            Process Payment
+          </button>
+        </div>
+      </form>
+    </div>
+
+    {/* Recent Payments Table */}
+    <div className="border p-4 rounded-lg">
+      <h3 className="font-medium text-gray-800 mb-2">Recent Payments</h3>
+      <div className="overflow-x-auto">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-4 py-2 text-left text-sm font-semibold text-gray-700">Date</th>
+              <th className="px-4 py-2 text-left text-sm font-semibold text-gray-700">Payee</th>
+              <th className="px-4 py-2 text-left text-sm font-semibold text-gray-700">Amount</th>
+              <th className="px-4 py-2 text-left text-sm font-semibold text-gray-700">Account</th>
+              <th className="px-4 py-2 text-left text-sm font-semibold text-gray-700">Status</th>
+              <th className="px-4 py-2 text-left text-sm font-semibold text-gray-700">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {recentTransactions.map((transaction) => (
+              <tr key={transaction.id}>
+                <td className="px-4 py-2 text-sm text-gray-700">{transaction.date}</td>
+                <td className="px-4 py-2 text-sm text-gray-700">{transaction.description}</td>
+                <td className="px-4 py-2 text-sm text-gray-700">{transaction.amount}</td>
+                <td className="px-4 py-2 text-sm text-gray-700">{transaction.account}</td>
+                <td className="px-4 py-2">
+                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                    transaction.status === 'completed' ? 'bg-green-100 text-green-800' :
+                    transaction.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                    'bg-gray-100 text-gray-800'
+                  }`}>
+                    {transaction.status}
+                  </span>
+                </td>
+                <td className="px-4 py-2 text-sm space-x-2">
+                  <button className="text-blue-600 hover:underline">Edit</button>
+                  <button className="text-red-600 hover:underline">Cancel</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    {/* Quick Financial Summary */}
+    <div className="border p-4 rounded-lg grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="bg-green-50 p-4 rounded-lg">
+        <p className="text-sm text-gray-600">Total Payments Processed</p>
+        <p className="text-xl font-bold text-gray-900">$190,700</p>
+      </div>
+      <div className="bg-yellow-50 p-4 rounded-lg">
+        <p className="text-sm text-gray-600">Pending Payments</p>
+        <p className="text-xl font-bold text-gray-900">$12,500</p>
+      </div>
+      <div className="bg-blue-50 p-4 rounded-lg">
+        <p className="text-sm text-gray-600">Failed / Canceled Payments</p>
+        <p className="text-xl font-bold text-gray-900">$0</p>
+      </div>
+    </div>
+  </div>
+)}
+
+     {/* Treasury */}
+{activeTab === 'treasury' && (
+  <div className="bg-white p-6 rounded-xl shadow-sm border space-y-6">
+    <h2 className="text-xl font-semibold">Treasury Management</h2>
+    <p className="text-gray-600">Monitor liquidity, cash flow, and investments.</p>
+
+    {/* Cash Flow Overview */}
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="bg-green-50 p-4 rounded-lg">
+        <p className="text-sm text-gray-600">Total Cash Available</p>
+        <p className="text-xl font-bold text-gray-900">$1,850,000</p>
+      </div>
+      <div className="bg-blue-50 p-4 rounded-lg">
+        <p className="text-sm text-gray-600">Investments Value</p>
+        <p className="text-xl font-bold text-gray-900">$650,000</p>
+      </div>
+      <div className="bg-yellow-50 p-4 rounded-lg">
+        <p className="text-sm text-gray-600">Cash Flow (Monthly)</p>
+        <p className="text-xl font-bold text-gray-900">+$125,000</p>
+      </div>
+    </div>
+
+    {/* Treasury Reports */}
+    <div className="border p-4 rounded-lg">
+      <h3 className="font-medium text-gray-800 mb-2">Treasury Reports</h3>
+      <div className="space-y-2">
+        <button className="w-full p-2 text-left bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+          Daily Cash Position Report
+        </button>
+        <button className="w-full p-2 text-left bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+          Monthly Liquidity Report
+        </button>
+        <button className="w-full p-2 text-left bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+          Investment Allocation Report
+        </button>
+      </div>
+    </div>
+
+    {/* Quick Actions */}
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <button
+        onClick={() => setShowAddInvestmentModal(true)}
+        className="p-4 rounded-lg border hover:bg-slate-50 transition-colors text-center"
+      >
+        <TrendingUp className="w-6 h-6 text-green-600 mx-auto mb-2" />
+        <p className="text-sm font-medium">Add Investment</p>
+      </button>
+      <button
+        onClick={() => setShowCashWithdrawalModal(true)}
+        className="p-4 rounded-lg border hover:bg-slate-50 transition-colors text-center"
+      >
+        <TrendingDown className="w-6 h-6 text-red-600 mx-auto mb-2" />
+        <p className="text-sm font-medium">Cash Withdrawal</p>
+      </button>
+      <button
+        onClick={() => setShowLiquidityForecastModal(true)}
+        className="p-4 rounded-lg border hover:bg-slate-50 transition-colors text-center"
+      >
+        <DollarSign className="w-6 h-6 text-blue-600 mx-auto mb-2" />
+        <p className="text-sm font-medium">Liquidity Forecast</p>
+      </button>
+      <button
+        onClick={() => onNavigate('financial-reports')}
+        className="p-4 rounded-lg border hover:bg-slate-50 transition-colors text-center"
+      >
+        <CreditCard className="w-6 h-6 text-purple-600 mx-auto mb-2" />
+        <p className="text-sm font-medium">Treasury Report</p>
+      </button>
+    </div>
+  </div>
+)}
+
+{/* Banking */}
+{activeTab === 'banking' && (
+  <div className="bg-white p-6 rounded-xl shadow-sm border space-y-6">
+    <h2 className="text-xl font-semibold">Banking Operations</h2>
+    <p className="text-gray-600">Manage accounts, transactions, and liaise with banks.</p>
+
+    {/* Bank Accounts Overview */}
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      {bankAccounts.map((account, index) => (
+        <div key={index} className="border p-4 rounded-lg hover:bg-slate-50 transition-colors">
+          <p className="text-sm font-medium text-gray-600">{account.name}</p>
+          <p className="text-xs text-gray-500">{account.bank} • {account.type}</p>
+          <div className="mt-2 flex justify-between items-center">
+            <p className="text-lg font-bold">{`₹${parseFloat(account.balance || 0).toLocaleString()}`}</p>
+            <p className="text-xs text-gray-500">{account.currency}</p>
+          </div>
+        </div>
+      ))}
+    </div>
+
+    {/* Recent Bank Transactions */}
+    <div className="border p-4 rounded-lg">
+      <h3 className="font-medium text-gray-800 mb-2">Recent Bank Transactions</h3>
+      <div className="overflow-x-auto">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-4 py-2 text-left text-sm font-semibold text-gray-700">Date</th>
+              <th className="px-4 py-2 text-left text-sm font-semibold text-gray-700">Account</th>
+              <th className="px-4 py-2 text-left text-sm font-semibold text-gray-700">Transaction</th>
+              <th className="px-4 py-2 text-left text-sm font-semibold text-gray-700">Amount</th>
+              <th className="px-4 py-2 text-left text-sm font-semibold text-gray-700">Status</th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {recentTransactions.map((transaction) => (
+              <tr key={transaction.id}>
+                <td className="px-4 py-2 text-sm text-gray-700">{transaction.date}</td>
+                <td className="px-4 py-2 text-sm text-gray-700">{transaction.account}</td>
+                <td className="px-4 py-2 text-sm text-gray-700">{transaction.description}</td>
+                <td className="px-4 py-2 text-sm text-gray-700">{transaction.amount}</td>
+                <td className="px-4 py-2">
+                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                    transaction.status === 'completed' ? 'bg-green-100 text-green-800' :
+                    transaction.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                    'bg-gray-100 text-gray-800'
+                  }`}>
+                    {transaction.status}
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    {/* Quick Actions */}
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <button
+        onClick={() => setShowAddBankAccountModal(true)}
+        className="p-4 rounded-lg border hover:bg-slate-50 transition-colors text-center"
+      >
+        <Building2 className="w-6 h-6 text-purple-600 mx-auto mb-2" />
+        <p className="text-sm font-medium">Add Bank Account</p>
+      </button>
+      <button
+        onClick={() => setShowDepositFundsModal(true)}
+        className="p-4 rounded-lg border hover:bg-slate-50 transition-colors text-center"
+      >
+        <ArrowUpRight className="w-6 h-6 text-blue-600 mx-auto mb-2" />
+        <p className="text-sm font-medium">Deposit Funds</p>
+      </button>
+      <button
+        onClick={() => setShowWithdrawFundsModal(true)}
+        className="p-4 rounded-lg border hover:bg-slate-50 transition-colors text-center"
+      >
+        <ArrowDownRight className="w-6 h-6 text-red-600 mx-auto mb-2" />
+        <p className="text-sm font-medium">Withdraw Funds</p>
+      </button>
+      <button
+        onClick={() => setShowBankReconciliationModal(true)}
+        className="p-4 rounded-lg border hover:bg-slate-50 transition-colors text-center"
+      >
+        <DollarSign className="w-6 h-6 text-green-600 mx-auto mb-2" />
+        <p className="text-sm font-medium">Bank Reconciliation</p>
+      </button>
+    </div>
+  </div>
+)}
+
+
+    </div>
+
+    {/* Modals */}
+    {showAddInvestmentModal && (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white p-6 rounded-lg max-w-md w-full">
+          <h3 className="text-lg font-semibold mb-4">Add Investment</h3>
+          <form>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700">Investment Type</label>
+              <select className="mt-1 block w-full border-gray-300 rounded-lg shadow-sm">
+                <option>Stocks</option>
+                <option>Bonds</option>
+                <option>Real Estate</option>
+              </select>
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700">Amount</label>
+              <input type="number" className="mt-1 block w-full border-gray-300 rounded-lg shadow-sm" />
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700">Date</label>
+              <input type="date" className="mt-1 block w-full border-gray-300 rounded-lg shadow-sm" />
+            </div>
+            <div className="flex justify-end space-x-2">
+              <button type="button" onClick={() => setShowAddInvestmentModal(false)} className="px-4 py-2 bg-gray-300 rounded-lg">Cancel</button>
+              <button type="button" onClick={() => { alert('Investment added successfully'); setShowAddInvestmentModal(false); }} className="px-4 py-2 bg-blue-600 text-white rounded-lg">Add</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    )}
+    {showCashWithdrawalModal && (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white p-6 rounded-lg max-w-md w-full">
+          <h3 className="text-lg font-semibold mb-4">Cash Withdrawal</h3>
+          <form>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700">Amount</label>
+              <input type="number" className="mt-1 block w-full border-gray-300 rounded-lg shadow-sm" />
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700">Bank Account</label>
+              <select className="mt-1 block w-full border-gray-300 rounded-lg shadow-sm">
+                {bankAccounts.map((account, index) => (
+                  <option key={index} value={account.name}>{account.name}</option>
+                ))}
+              </select>
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700">Reason</label>
+              <input type="text" className="mt-1 block w-full border-gray-300 rounded-lg shadow-sm" />
+            </div>
+            <div className="flex justify-end space-x-2">
+              <button type="button" onClick={() => setShowCashWithdrawalModal(false)} className="px-4 py-2 bg-gray-300 rounded-lg">Cancel</button>
+              <button type="button" onClick={() => { alert('Cash withdrawal processed'); setShowCashWithdrawalModal(false); }} className="px-4 py-2 bg-blue-600 text-white rounded-lg">Withdraw</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    )}
+    {showLiquidityForecastModal && (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white p-6 rounded-lg max-w-md w-full">
+          <h3 className="text-lg font-semibold mb-4">Liquidity Forecast</h3>
+          <div className="mb-4">
+            <p className="text-sm text-gray-600">Current Liquidity Status:</p>
+            <p className="text-lg font-bold text-green-600">$1,850,000 available</p>
+          </div>
+          <div className="mb-4">
+            <p className="text-sm text-gray-600">Projected for next 30 days:</p>
+            <p className="text-lg font-bold text-blue-600">$1,925,000</p>
+          </div>
+          <div className="flex justify-end">
+            <button type="button" onClick={() => setShowLiquidityForecastModal(false)} className="px-4 py-2 bg-blue-600 text-white rounded-lg">Close</button>
+          </div>
+        </div>
+      </div>
+    )}
+    {showFilterModal && (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white p-6 rounded-lg max-w-md w-full">
+          <h3 className="text-lg font-semibold mb-4">Filter Transactions</h3>
+          <form>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700">Date From</label>
+              <input type="date" className="mt-1 block w-full border-gray-300 rounded-lg shadow-sm" />
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700">Date To</label>
+              <input type="date" className="mt-1 block w-full border-gray-300 rounded-lg shadow-sm" />
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700">Amount Range</label>
+              <div className="flex space-x-2">
+                <input type="number" placeholder="Min" className="mt-1 block w-full border-gray-300 rounded-lg shadow-sm" />
+                <input type="number" placeholder="Max" className="mt-1 block w-full border-gray-300 rounded-lg shadow-sm" />
+              </div>
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700">Status</label>
+              <select className="mt-1 block w-full border-gray-300 rounded-lg shadow-sm">
+                <option>All</option>
+                <option>Completed</option>
+                <option>Pending</option>
+              </select>
+            </div>
+            <div className="flex justify-end space-x-2">
+              <button type="button" onClick={() => setShowFilterModal(false)} className="px-4 py-2 bg-gray-300 rounded-lg">Cancel</button>
+              <button type="button" onClick={() => { alert('Filters applied'); setShowFilterModal(false); }} className="px-4 py-2 bg-blue-600 text-white rounded-lg">Apply</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    )}
+    {showAddBankAccountModal && (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white p-6 rounded-lg max-w-md w-full">
+          <h3 className="text-lg font-semibold mb-4">Add Bank Account</h3>
+          <form>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700">Bank Name</label>
+              <input type="text" placeholder="Enter bank name" className="mt-1 block w-full border-gray-300 rounded-lg shadow-sm" />
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700">Account Name</label>
+              <input type="text" placeholder="Enter account name" className="mt-1 block w-full border-gray-300 rounded-lg shadow-sm" />
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700">Account Type</label>
+              <select className="mt-1 block w-full border-gray-300 rounded-lg shadow-sm">
+                <option>Checking</option>
+                <option>Savings</option>
+                <option>Business</option>
+              </select>
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700">Currency</label>
+              <select className="mt-1 block w-full border-gray-300 rounded-lg shadow-sm">
+                <option>INR</option>
+                <option>USD</option>
+                <option>EUR</option>
+              </select>
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700">Initial Balance</label>
+              <input type="number" placeholder="0.00" className="mt-1 block w-full border-gray-300 rounded-lg shadow-sm" />
+            </div>
+            <div className="flex justify-end space-x-2">
+              <button type="button" onClick={() => setShowAddBankAccountModal(false)} className="px-4 py-2 bg-gray-300 rounded-lg">Cancel</button>
+              <button type="button" onClick={() => { alert('Bank account added successfully'); setShowAddBankAccountModal(false); }} className="px-4 py-2 bg-blue-600 text-white rounded-lg">Add Account</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    )}
+    {showDepositFundsModal && (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white p-6 rounded-lg max-w-md w-full">
+          <h3 className="text-lg font-semibold mb-4">Deposit Funds</h3>
+          <form>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700">Select Bank Account</label>
+              <select className="mt-1 block w-full border-gray-300 rounded-lg shadow-sm">
+                {bankAccounts.map((account, index) => (
+                  <option key={index} value={account.name}>{account.name}</option>
+                ))}
+              </select>
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700">Amount</label>
+              <input type="number" placeholder="Enter amount" className="mt-1 block w-full border-gray-300 rounded-lg shadow-sm" />
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700">Deposit Date</label>
+              <input type="date" className="mt-1 block w-full border-gray-300 rounded-lg shadow-sm" />
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700">Description</label>
+              <input type="text" placeholder="Deposit details" className="mt-1 block w-full border-gray-300 rounded-lg shadow-sm" />
+            </div>
+            <div className="flex justify-end space-x-2">
+              <button type="button" onClick={() => setShowDepositFundsModal(false)} className="px-4 py-2 bg-gray-300 rounded-lg">Cancel</button>
+              <button type="button" onClick={() => { alert('Funds deposited successfully'); setShowDepositFundsModal(false); }} className="px-4 py-2 bg-blue-600 text-white rounded-lg">Deposit</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    )}
+    {showWithdrawFundsModal && (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white p-6 rounded-lg max-w-md w-full">
+          <h3 className="text-lg font-semibold mb-4">Withdraw Funds</h3>
+          <form>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700">Select Bank Account</label>
+              <select className="mt-1 block w-full border-gray-300 rounded-lg shadow-sm">
+                {bankAccounts.map((account, index) => (
+                  <option key={index} value={account.name}>{account.name}</option>
+                ))}
+              </select>
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700">Amount</label>
+              <input type="number" placeholder="Enter amount" className="mt-1 block w-full border-gray-300 rounded-lg shadow-sm" />
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700">Withdrawal Date</label>
+              <input type="date" className="mt-1 block w-full border-gray-300 rounded-lg shadow-sm" />
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700">Reason</label>
+              <input type="text" placeholder="Withdrawal reason" className="mt-1 block w-full border-gray-300 rounded-lg shadow-sm" />
+            </div>
+            <div className="flex justify-end space-x-2">
+              <button type="button" onClick={() => setShowWithdrawFundsModal(false)} className="px-4 py-2 bg-gray-300 rounded-lg">Cancel</button>
+              <button type="button" onClick={() => { alert('Funds withdrawn successfully'); setShowWithdrawFundsModal(false); }} className="px-4 py-2 bg-blue-600 text-white rounded-lg">Withdraw</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    )}
+    {showBankReconciliationModal && (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white p-6 rounded-lg max-w-md w-full">
+          <h3 className="text-lg font-semibold mb-4">Bank Reconciliation</h3>
+          <form>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700">Select Bank Account</label>
+              <select className="mt-1 block w-full border-gray-300 rounded-lg shadow-sm">
+                {bankAccounts.map((account, index) => (
+                  <option key={index} value={account.name}>{account.name}</option>
+                ))}
+              </select>
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700">Statement Balance</label>
+              <input type="number" placeholder="Bank statement balance" className="mt-1 block w-full border-gray-300 rounded-lg shadow-sm" />
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700">Book Balance</label>
+              <input type="number" placeholder="Company book balance" className="mt-1 block w-full border-gray-300 rounded-lg shadow-sm" />
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700">Adjustments</label>
+              <textarea placeholder="List any adjustments needed" className="mt-1 block w-full border-gray-300 rounded-lg shadow-sm"></textarea>
+            </div>
+            <div className="flex justify-end space-x-2">
+              <button type="button" onClick={() => setShowBankReconciliationModal(false)} className="px-4 py-2 bg-gray-300 rounded-lg">Cancel</button>
+              <button type="button" onClick={() => { alert('Reconciliation completed'); setShowBankReconciliationModal(false); }} className="px-4 py-2 bg-blue-600 text-white rounded-lg">Reconcile</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    )}
+  </>
+);
+
+};
+
+export default FinancialDashboard;
