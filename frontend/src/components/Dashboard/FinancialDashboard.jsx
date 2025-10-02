@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  DollarSign, 
-  TrendingUp, 
+import {
+  DollarSign,
+  TrendingUp,
   TrendingDown,
   CreditCard,
   Building2,
@@ -10,7 +10,9 @@ import {
   Plus,
   Filter,
   Download,
-  Eye
+  Eye,
+  AlertCircle,
+  CheckCircle
 } from 'lucide-react';
 
 const FinancialDashboard = ({ onNavigate, bankAccounts, recentTransactions, initialTab = 'overview' }) => {
@@ -25,6 +27,11 @@ const FinancialDashboard = ({ onNavigate, bankAccounts, recentTransactions, init
   const [showDepositFundsModal, setShowDepositFundsModal] = useState(false);
   const [showWithdrawFundsModal, setShowWithdrawFundsModal] = useState(false);
   const [showBankReconciliationModal, setShowBankReconciliationModal] = useState(false);
+  const [showDebitCardAlertsModal, setShowDebitCardAlertsModal] = useState(false);
+  const [showAddDebitCardModal, setShowAddDebitCardModal] = useState(false);
+  const [debitCards, setDebitCards] = useState([]);
+  const [debitCardAlerts, setDebitCardAlerts] = useState([]);
+  const [debitCardSettings, setDebitCardSettings] = useState(null);
 
   // Update activeTab when initialTab changes
   useEffect(() => {
@@ -49,6 +56,57 @@ const FinancialDashboard = ({ onNavigate, bankAccounts, recentTransactions, init
 
     fetchDashboardData();
   }, []);
+
+  // Fetch debit cards data
+  useEffect(() => {
+    const fetchDebitCardsData = async () => {
+      try {
+        const [cardsResponse, alertsResponse, settingsResponse] = await Promise.all([
+          fetch('http://localhost:5000/api/debit-cards/'),
+          fetch('http://localhost:5000/api/debit-cards/alerts/'),
+          fetch('http://localhost:5000/api/debit-cards/settings/')
+        ]);
+
+        if (cardsResponse.ok) {
+          const cards = await cardsResponse.json();
+          setDebitCards(cards);
+        }
+
+        if (alertsResponse.ok) {
+          const alerts = await alertsResponse.json();
+          setDebitCardAlerts(alerts);
+        }
+
+        if (settingsResponse.ok) {
+          const settings = await settingsResponse.json();
+          setDebitCardSettings(settings);
+        }
+      } catch (error) {
+        console.error('Error fetching debit cards data:', error);
+      }
+    };
+
+    fetchDebitCardsData();
+  }, []);
+
+  // Refresh debit cards data when modal opens
+  useEffect(() => {
+    if (showAddDebitCardModal) {
+      const refreshData = async () => {
+        try {
+          const response = await fetch('http://localhost:5000/api/debit-cards/');
+          if (response.ok) {
+            const cards = await response.json();
+            setDebitCards(cards);
+          }
+        } catch (error) {
+          console.error('Error refreshing debit cards data:', error);
+        }
+      };
+
+      refreshData();
+    }
+  }, [showAddDebitCardModal]);
 
   if (loading) {
     return (
@@ -440,6 +498,121 @@ const FinancialDashboard = ({ onNavigate, bankAccounts, recentTransactions, init
       </div>
     </div>
 
+    {/* Automated Debit Card Refill Alerts */}
+   <div className="border p-4 rounded-lg">
+     <div className="flex items-center justify-between mb-4">
+       <h3 className="font-medium text-gray-800">Debit Card Management</h3>
+       <div className="flex space-x-2">
+         <button
+           onClick={() => setShowAddDebitCardModal(true)}
+           className="px-3 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center space-x-2"
+         >
+           <Plus className="w-4 h-4" />
+           <span>Add Debit Card</span>
+         </button>
+         <button
+           onClick={() => setShowDebitCardAlertsModal(true)}
+           className="px-3 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center space-x-2"
+         >
+           <Plus className="w-4 h-4" />
+           <span>Configure Alerts</span>
+         </button>
+       </div>
+     </div>
+
+      {/* Debit Cards Overview */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+        <div className="p-4 rounded-lg bg-blue-50 border border-blue-200">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
+              <CreditCard className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-gray-600">Active Cards</p>
+              <p className="text-xl font-bold text-gray-800">{debitCards.filter(card => card.status === 'active').length}</p>
+            </div>
+          </div>
+        </div>
+        <div className="p-4 rounded-lg bg-yellow-50 border border-yellow-200">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-yellow-500 rounded-lg flex items-center justify-center">
+              <AlertCircle className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-gray-600">Low Balance Alerts</p>
+              <p className="text-xl font-bold text-gray-800">{debitCardAlerts.filter(alert => !alert.isRead && alert.alertType === 'low_balance').length}</p>
+            </div>
+          </div>
+        </div>
+        <div className="p-4 rounded-lg bg-green-50 border border-green-200">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
+              <CheckCircle className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-gray-600">Auto-Refilled Today</p>
+              <p className="text-xl font-bold text-gray-800">{debitCardAlerts.filter(alert => alert.alertType === 'auto_refill' && new Date(alert.createdAt).toDateString() === new Date().toDateString()).length}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Debit Card List */}
+      <div className="space-y-3">
+        <h4 className="text-sm font-medium text-gray-700">Debit Cards</h4>
+        <div className="space-y-2">
+          {debitCards.length === 0 ? (
+            <p className="text-sm text-gray-500">No debit cards configured</p>
+          ) : (
+            debitCards.map((card, index) => {
+              const hasLowBalanceAlert = debitCardAlerts.some(alert =>
+                alert.debitCardId === card.id && alert.alertType === 'low_balance' && !alert.isRead
+              );
+              return (
+                <div key={card.id || index} className={`p-3 rounded-lg border hover:bg-gray-50 transition-colors ${
+                  hasLowBalanceAlert ? 'border-red-200 bg-red-50' : 'border-gray-200'
+                }`}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                        hasLowBalanceAlert ? 'bg-red-100' : 'bg-blue-100'
+                      }`}>
+                        {hasLowBalanceAlert ? (
+                          <AlertCircle className={`w-4 h-4 ${hasLowBalanceAlert ? 'text-red-600' : 'text-blue-600'}`} />
+                        ) : (
+                          <CreditCard className="w-4 h-4 text-blue-600" />
+                        )}
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-gray-800">{card.cardNumber}</p>
+                        <p className="text-xs text-gray-500">{card.cardType} - {card.bankName}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className={`text-sm font-medium ${hasLowBalanceAlert ? 'text-red-600' : 'text-gray-800'}`}>
+                        ₹{parseFloat(card.currentBalance).toLocaleString()}
+                      </p>
+                      <p className="text-xs text-gray-500">Balance</p>
+                    </div>
+                  </div>
+                  <div className="mt-2 flex items-center justify-between">
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                      hasLowBalanceAlert ? 'bg-red-100 text-red-800' :
+                      card.status === 'active' ? 'bg-green-100 text-green-800' :
+                      'bg-gray-100 text-gray-800'
+                    }`}>
+                      {hasLowBalanceAlert ? 'Low Balance Alert' : card.status}
+                    </span>
+                    <span className="text-xs text-gray-500">Alert threshold: ₹{card.alertThreshold}</span>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+      </div>
+    </div>
+
     {/* Quick Actions */}
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
       <button
@@ -816,6 +989,407 @@ const FinancialDashboard = ({ onNavigate, bankAccounts, recentTransactions, init
             <div className="flex justify-end space-x-2">
               <button type="button" onClick={() => setShowBankReconciliationModal(false)} className="px-4 py-2 bg-gray-300 rounded-lg">Cancel</button>
               <button type="button" onClick={() => { alert('Reconciliation completed'); setShowBankReconciliationModal(false); }} className="px-4 py-2 bg-blue-600 text-white rounded-lg">Reconcile</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    )}
+    {showDebitCardAlertsModal && (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white p-6 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          <h3 className="text-lg font-semibold mb-4">Configure Debit Card Refill Alerts</h3>
+
+          {/* Alert Settings */}
+          <div className="space-y-6">
+            <div className="border p-4 rounded-lg">
+              <h4 className="text-md font-medium text-gray-800 mb-3">Global Alert Settings</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Default Alert Threshold
+                  </label>
+                  <input
+                    type="number"
+                    placeholder="500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Minimum balance before alert triggers</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Auto-Refill Amount
+                  </label>
+                  <input
+                    type="number"
+                    placeholder="1000"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Amount to auto-refill when threshold reached</p>
+                </div>
+              </div>
+              <div className="mt-4">
+                <label className="flex items-center space-x-2">
+                  <input type="checkbox" className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                  <span className="text-sm text-gray-700">Enable automatic refill</span>
+                </label>
+              </div>
+            </div>
+
+            {/* Individual Card Settings */}
+            <div className="border p-4 rounded-lg">
+              <h4 className="text-md font-medium text-gray-800 mb-3">Individual Card Settings</h4>
+              <div className="space-y-4">
+                <div className="p-3 rounded-lg border border-gray-200">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center space-x-3">
+                      <CreditCard className="w-5 h-5 text-blue-600" />
+                      <span className="text-sm font-medium">**** **** **** 1234 (HSBC)</span>
+                    </div>
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                      Active
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-xs text-gray-600 mb-1">Alert Threshold</label>
+                      <input
+                        type="number"
+                        defaultValue="500"
+                        className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-600 mb-1">Refill Amount</label>
+                      <input
+                        type="number"
+                        defaultValue="1000"
+                        className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                    </div>
+                  </div>
+                  <div className="mt-2 flex items-center space-x-4">
+                    <label className="flex items-center space-x-1">
+                      <input type="checkbox" defaultChecked className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                      <span className="text-xs text-gray-600">Enable alerts</span>
+                    </label>
+                    <label className="flex items-center space-x-1">
+                      <input type="checkbox" className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                      <span className="text-xs text-gray-600">Auto-refill</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div className="p-3 rounded-lg border border-red-200 bg-red-50">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center space-x-3">
+                      <AlertCircle className="w-5 h-5 text-red-600" />
+                      <span className="text-sm font-medium">**** **** **** 5678 (Standard Chartered)</span>
+                    </div>
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                      Low Balance
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-xs text-gray-600 mb-1">Alert Threshold</label>
+                      <input
+                        type="number"
+                        defaultValue="500"
+                        className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-600 mb-1">Refill Amount</label>
+                      <input
+                        type="number"
+                        defaultValue="1000"
+                        className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                    </div>
+                  </div>
+                  <div className="mt-2 flex items-center space-x-4">
+                    <label className="flex items-center space-x-1">
+                      <input type="checkbox" defaultChecked className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                      <span className="text-xs text-gray-600">Enable alerts</span>
+                    </label>
+                    <label className="flex items-center space-x-1">
+                      <input type="checkbox" defaultChecked className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                      <span className="text-xs text-gray-600">Auto-refill</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div className="p-3 rounded-lg border border-gray-200">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center space-x-3">
+                      <CreditCard className="w-5 h-5 text-green-600" />
+                      <span className="text-sm font-medium">**** **** **** 9012 (Emirates NBD)</span>
+                    </div>
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                      Active
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-xs text-gray-600 mb-1">Alert Threshold</label>
+                      <input
+                        type="number"
+                        defaultValue="300"
+                        className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-600 mb-1">Refill Amount</label>
+                      <input
+                        type="number"
+                        defaultValue="800"
+                        className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                    </div>
+                  </div>
+                  <div className="mt-2 flex items-center space-x-4">
+                    <label className="flex items-center space-x-1">
+                      <input type="checkbox" defaultChecked className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                      <span className="text-xs text-gray-600">Enable alerts</span>
+                    </label>
+                    <label className="flex items-center space-x-1">
+                      <input type="checkbox" className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                      <span className="text-xs text-gray-600">Auto-refill</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Notification Settings */}
+            <div className="border p-4 rounded-lg">
+              <h4 className="text-md font-medium text-gray-800 mb-3">Notification Settings</h4>
+              <div className="space-y-3">
+                <label className="flex items-center space-x-2">
+                  <input type="checkbox" defaultChecked className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                  <span className="text-sm text-gray-700">Email notifications for low balance alerts</span>
+                </label>
+                <label className="flex items-center space-x-2">
+                  <input type="checkbox" defaultChecked className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                  <span className="text-sm text-gray-700">SMS notifications for critical alerts</span>
+                </label>
+                <label className="flex items-center space-x-2">
+                  <input type="checkbox" className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                  <span className="text-sm text-gray-700">Dashboard notifications</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-end space-x-3 mt-6">
+            <button
+              onClick={() => setShowDebitCardAlertsModal(false)}
+              className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={async () => {
+                try {
+                  const response = await fetch('http://localhost:5000/api/debit-cards/settings/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(debitCardSettings || {})
+                  });
+                  if (response.ok) {
+                    alert('Debit card alert settings saved successfully!');
+                    setShowDebitCardAlertsModal(false);
+                  } else {
+                    alert('Failed to save settings');
+                  }
+                } catch (error) {
+                  console.error('Error saving settings:', error);
+                  alert('Error saving settings');
+                }
+              }}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Save Settings
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+    {showAddDebitCardModal && (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white p-6 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          <h3 className="text-lg font-semibold mb-4">Add New Debit Card</h3>
+
+          <form onSubmit={async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const newCard = {
+              cardNumber: formData.get('cardNumber'),
+              bankName: formData.get('bankName'),
+              cardType: formData.get('cardType'),
+              currentBalance: parseFloat(formData.get('currentBalance')),
+              currency: formData.get('currency') || 'INR',
+              alertThreshold: parseFloat(formData.get('alertThreshold')) || 500.0,
+              autoRefillEnabled: formData.get('autoRefillEnabled') === 'on',
+              autoRefillAmount: parseFloat(formData.get('autoRefillAmount')) || 1000.0,
+              status: 'active'
+            };
+
+            try {
+              const response = await fetch('http://localhost:5000/api/debit-cards/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newCard)
+              });
+
+              if (response.ok) {
+                const savedCard = await response.json();
+
+                // Add the new card to the existing cards state
+                setDebitCards(prevCards => [...prevCards, savedCard]);
+
+                alert('Debit card added successfully!');
+                setShowAddDebitCardModal(false);
+
+                // Reset form
+                e.target.reset();
+              } else {
+                const errorData = await response.json();
+                alert(`Failed to add debit card: ${errorData.detail || 'Unknown error'}`);
+              }
+            } catch (error) {
+              console.error('Error adding debit card:', error);
+              alert('Error adding debit card. Please check your connection and try again.');
+            }
+          }}>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Card Number *
+                </label>
+                <input
+                  type="text"
+                  name="cardNumber"
+                  placeholder="**** **** **** 1234"
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Bank Name *
+                </label>
+                <input
+                  type="text"
+                  name="bankName"
+                  placeholder="Enter bank name"
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Card Type *
+                </label>
+                <select
+                  name="cardType"
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="">Select card type</option>
+                  <option value="Primary Card">Primary Card</option>
+                  <option value="Business Card">Business Card</option>
+                  <option value="Travel Card">Travel Card</option>
+                  <option value="Corporate Card">Corporate Card</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Current Balance *
+                </label>
+                <input
+                  type="number"
+                  name="currentBalance"
+                  placeholder="0.00"
+                  step="0.01"
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Currency
+                </label>
+                <select
+                  name="currency"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="INR">INR</option>
+                  <option value="USD">USD</option>
+                  <option value="EUR">EUR</option>
+                  <option value="AED">AED</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Alert Threshold
+                </label>
+                <input
+                  type="number"
+                  name="alertThreshold"
+                  placeholder="500"
+                  step="0.01"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+                <p className="text-xs text-gray-500 mt-1">Minimum balance before alert triggers</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Auto-Refill Amount
+                </label>
+                <input
+                  type="number"
+                  name="autoRefillAmount"
+                  placeholder="1000"
+                  step="0.01"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+                <p className="text-xs text-gray-500 mt-1">Amount to auto-refill when threshold reached</p>
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    name="autoRefillEnabled"
+                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  <span className="text-sm text-gray-700">Enable automatic refill</span>
+                </label>
+              </div>
+            </div>
+
+            <div className="flex justify-end space-x-3 mt-6">
+              <button
+                type="button"
+                onClick={() => setShowAddDebitCardModal(false)}
+                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+              >
+                Add Debit Card
+              </button>
             </div>
           </form>
         </div>

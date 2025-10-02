@@ -106,7 +106,6 @@ const menuItems = [
     submenu: [
       { id: "vehicles", label: "Vehicles" },
       { id: "drivers", label: "Drivers" },
-      { id: "maintenance", label: "Maintenance" },
       { id: "scheduling", label: "Scheduling" },
     ],
   },

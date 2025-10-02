@@ -6,15 +6,6 @@ load_dotenv()
 
 try:
     client = AsyncIOMotorClient(os.getenv("MONGO_URI", "mongodb://localhost:27017"))
-    # Test the connection with a timeout
-    import asyncio
-
-    async def test_connection():
-        import asyncio
-        await client.admin.command('ping')
-        return True
-
-    asyncio.run(test_connection())
     db = client.universerererp
     print("Connected to MongoDB - using real database")
 except Exception as e:
@@ -152,5 +143,8 @@ except Exception as e:
             self.maintenance_schedules = MockCollection()
             self.vehicles = MockCollection()
             self.drivers = MockCollection()
+            self.debit_cards = MockCollection()
+            self.debit_card_alerts = MockCollection()
+            self.debit_card_settings = MockCollection()
 
     db = MockDB()

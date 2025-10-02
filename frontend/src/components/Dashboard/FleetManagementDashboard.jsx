@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import {
   Car,
   Users,
@@ -6,100 +7,48 @@ import {
   Calendar,
   MapPin,
   Fuel,
-  CheckCircle,
   AlertCircle,
   Clock,
   Plus,
   Eye,
-  Edit,
-  Trash2,
   Navigation
 } from 'lucide-react';
-import MaintenanceSchedulingDashboard from './MaintenanceSchedulingDashboard';
 
 const FleetManagementDashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
-  const [maintenanceSchedule, setMaintenanceSchedule] = useState([
-    {
-      id: 1,
-      vehicle: "Mercedes S-Class",
-      type: "Regular Service",
-      scheduledDate: "2024-02-15",
-      status: "Scheduled",
-      cost: "$800",
-      description: "Oil change, filter replacement, brake check"
-    },
-    {
-      id: 2,
-      vehicle: "BMW 7 Series",
-      type: "Brake Service",
-      scheduledDate: "2024-01-25",
-      status: "In Progress",
-      cost: "$1,200",
-      description: "Brake pad and rotor replacement"
-    },
-    {
-      id: 3,
-      vehicle: "Audi A8",
-      type: "Engine Check",
-      scheduledDate: "2024-01-20",
-      status: "Completed",
-      cost: "$600",
-      description: "Engine diagnostic and minor repairs"
-    }
-  ]);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [selectedMaintenance, setSelectedMaintenance] = useState(null);
-  const [editForm, setEditForm] = useState({
-    vehicle: '',
-    type: '',
-    scheduledDate: '',
-    status: '',
-    cost: '',
-    description: ''
-  });
+  const [maintenanceRequests, setMaintenanceRequests] = useState([]);
+  const [maintenanceSchedules, setMaintenanceSchedules] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Handler functions
-  const handleEditMaintenance = (maintenance) => {
-    setSelectedMaintenance(maintenance);
-    setEditForm({
-      vehicle: maintenance.vehicle,
-      type: maintenance.type,
-      scheduledDate: maintenance.scheduledDate,
-      status: maintenance.status,
-      cost: maintenance.cost,
-      description: maintenance.description
-    });
-    setShowEditModal(true);
-  };
+  // Fetch maintenance data on component mount
+  useEffect(() => {
+    fetchMaintenanceData();
+  }, []);
 
-  const handleUpdateMaintenance = () => {
-    const updatedMaintenance = {
-      ...selectedMaintenance,
-      ...editForm
-    };
-    setMaintenanceSchedule(maintenanceSchedule.map(m => m.id === selectedMaintenance.id ? updatedMaintenance : m));
-    setShowEditModal(false);
-    setSelectedMaintenance(null);
-    setEditForm({
-      vehicle: '',
-      type: '',
-      scheduledDate: '',
-      status: '',
-      cost: '',
-      description: ''
-    });
-  };
+  const fetchMaintenanceData = async () => {
+    try {
+      const [requestsResponse, schedulesResponse] = await Promise.all([
+        axios.get('http://localhost:5000/api/maintenance-requests'),
+        axios.get('http://localhost:5000/api/maintenance-schedules')
+      ]);
 
-  const handleDeleteMaintenance = (id) => {
-    if (window.confirm('Are you sure you want to delete this maintenance schedule?')) {
-      setMaintenanceSchedule(maintenanceSchedule.filter(m => m.id !== id));
+      // Filter for fleet-related maintenance only
+      const fleetRequests = requestsResponse.data.filter(item =>
+        item.location && item.location.toLowerCase().includes('fleet')
+      );
+      const fleetSchedules = schedulesResponse.data.filter(item =>
+        item.location && item.location.toLowerCase().includes('fleet')
+      );
+
+      setMaintenanceRequests(fleetRequests);
+      setMaintenanceSchedules(fleetSchedules);
+    } catch (err) {
+      console.error('Error fetching maintenance data:', err);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleMarkCompleted = (id) => {
-    setMaintenanceSchedule(maintenanceSchedule.map(m => m.id === id ? { ...m, status: 'Completed' } : m));
-  };
 
   const fleetStats = [
     {
@@ -118,8 +67,8 @@ const FleetManagementDashboard = () => {
     },
     {
       title: "Maintenance Due",
-      value: "3",
-      change: "+1",
+      value: maintenanceRequests.filter(req => req.status !== 'Completed').length.toString(),
+      change: `+${maintenanceRequests.filter(req => req.status === 'In Progress').length}`,
       icon: Wrench,
       color: "from-orange-500 to-red-600"
     },
@@ -264,7 +213,7 @@ const FleetManagementDashboard = () => {
     { id: 'overview', label: 'Overview' },
     { id: 'vehicles', label: 'Vehicles' },
     { id: 'drivers', label: 'Drivers' },
-    { id: 'maintenance', label: 'Maintenance' },
+    { id: 'maintenance', label: 'Maintenance Drive' },
     { id: 'trips', label: 'Trips' }
   ];
 
@@ -435,18 +384,18 @@ const FleetManagementDashboard = () => {
       <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-gray-800">
-            Maintenance Schedule
+            Fleet Maintenance
           </h2>
           <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">
             View All
           </button>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {maintenanceSchedule.map((maintenance) => (
-            <div key={maintenance.id} className="p-4 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
+          {maintenanceRequests.slice(0, 3).map((maintenance) => (
+            <div key={maintenance.id || maintenance._id} className="p-4 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-sm font-medium text-gray-800">
-                  {maintenance.vehicle}
+                  {maintenance.title || maintenance.property || 'Vehicle Maintenance'}
                 </h3>
                 <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
                   maintenance.status === 'Completed' ? 'bg-green-100 text-green-800' :
@@ -459,44 +408,19 @@ const FleetManagementDashboard = () => {
               <div className="space-y-2">
                 <div className="flex items-center space-x-2">
                   <Wrench className="w-4 h-4 text-gray-400" />
-                  <span className="text-sm text-gray-600">{maintenance.type}</span>
+                  <span className="text-sm text-gray-600">{maintenance.category || 'Maintenance'}</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Calendar className="w-4 h-4 text-gray-400" />
-                  <span className="text-sm text-gray-600">{maintenance.scheduledDate}</span>
+                  <span className="text-sm text-gray-600">{maintenance.dueDate}</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Fuel className="w-4 h-4 text-gray-400" />
-                  <span className="text-sm text-gray-600">{maintenance.cost}</span>
+                  <span className="text-sm text-gray-600">{maintenance.estimatedCost}</span>
                 </div>
                 <p className="text-xs text-gray-500 mt-2">
                   {maintenance.description}
                 </p>
-              </div>
-              <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-200">
-                <button
-                  onClick={() => handleEditMaintenance(maintenance)}
-                  className="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors flex items-center space-x-1"
-                >
-                  <Edit className="w-3 h-3" />
-                  <span>Edit</span>
-                </button>
-                {maintenance.status !== 'Completed' && (
-                  <button
-                    onClick={() => handleMarkCompleted(maintenance.id)}
-                    className="px-3 py-1 text-sm bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors flex items-center space-x-1"
-                  >
-                    <CheckCircle className="w-3 h-3" />
-                    <span>Complete</span>
-                  </button>
-                )}
-                <button
-                  onClick={() => handleDeleteMaintenance(maintenance.id)}
-                  className="px-3 py-1 text-sm bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors flex items-center space-x-1"
-                >
-                  <Trash2 className="w-3 h-3" />
-                  <span>Delete</span>
-                </button>
               </div>
             </div>
           ))}
@@ -657,7 +581,116 @@ const FleetManagementDashboard = () => {
 
       {/* Maintenance Tab */}
       {activeTab === 'maintenance' && (
-        <MaintenanceSchedulingDashboard />
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-gray-800">Fleet Maintenance</h2>
+            <button className="px-3 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center space-x-2">
+              <Plus className="w-4 h-4" />
+              <span>Schedule Maintenance</span>
+            </button>
+          </div>
+
+          {/* Maintenance Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div className="p-4 rounded-lg bg-orange-50 border border-orange-200">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center">
+                  <AlertCircle className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Pending Requests</p>
+                  <p className="text-xl font-bold text-gray-800">
+                    {maintenanceRequests.filter(req => req.status === 'Pending').length}
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="p-4 rounded-lg bg-blue-50 border border-blue-200">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
+                  <Clock className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-600">In Progress</p>
+                  <p className="text-xl font-bold text-gray-800">
+                    {maintenanceRequests.filter(req => req.status === 'In Progress').length}
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="p-4 rounded-lg bg-green-50 border border-green-200">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
+                  <Wrench className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Completed</p>
+                  <p className="text-xl font-bold text-gray-800">
+                    {maintenanceRequests.filter(req => req.status === 'Completed').length}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Maintenance Requests */}
+          <div className="space-y-4">
+            <h3 className="text-md font-semibold text-gray-800">Maintenance Requests</h3>
+            {maintenanceRequests.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {maintenanceRequests.map((maintenance) => (
+                  <div key={maintenance.id || maintenance._id} className="p-4 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
+                    <div className="flex items-center justify-between mb-3">
+                      <h4 className="text-sm font-medium text-gray-800">
+                        {maintenance.title || maintenance.property || 'Vehicle Maintenance'}
+                      </h4>
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                        maintenance.status === 'Completed' ? 'bg-green-100 text-green-800' :
+                        maintenance.status === 'In Progress' ? 'bg-blue-100 text-blue-800' :
+                        'bg-yellow-100 text-yellow-800'
+                      }`}>
+                        {maintenance.status}
+                      </span>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <Wrench className="w-4 h-4 text-gray-400" />
+                        <span className="text-sm text-gray-600">{maintenance.category || 'Fleet Maintenance'}</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Calendar className="w-4 h-4 text-gray-400" />
+                        <span className="text-sm text-gray-600">{maintenance.dueDate}</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Fuel className="w-4 h-4 text-gray-400" />
+                        <span className="text-sm text-gray-600">{maintenance.estimatedCost}</span>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-2">
+                        {maintenance.description}
+                      </p>
+                    </div>
+                    <div className="mt-3 pt-3 border-t border-gray-200">
+                      <div className="flex items-center justify-between">
+                        <button className="text-blue-600 hover:text-blue-700 text-xs font-medium">
+                          View Details
+                        </button>
+                        <button className="text-gray-600 hover:text-gray-700 text-xs font-medium">
+                          Update Status
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <Wrench className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-500">No fleet maintenance requests found</p>
+                <p className="text-sm text-gray-400 mt-1">Schedule maintenance for your fleet vehicles</p>
+              </div>
+            )}
+          </div>
+        </div>
       )}
 
       {/* Trips Tab */}
@@ -726,103 +759,6 @@ const FleetManagementDashboard = () => {
         </div>
       </div>
 
-      {/* Edit Maintenance Modal */}
-      {showEditModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <h2 className="text-2xl font-bold text-black mb-6">Edit Maintenance Schedule</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Vehicle *
-                </label>
-                <input
-                  type="text"
-                  value={editForm.vehicle}
-                  onChange={(e) => setEditForm({...editForm, vehicle: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-black"
-                  placeholder="Vehicle name"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Type *
-                </label>
-                <input
-                  type="text"
-                  value={editForm.type}
-                  onChange={(e) => setEditForm({...editForm, type: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-black"
-                  placeholder="Maintenance type"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Scheduled Date *
-                </label>
-                <input
-                  type="date"
-                  value={editForm.scheduledDate}
-                  onChange={(e) => setEditForm({...editForm, scheduledDate: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-black"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Status *
-                </label>
-                <select
-                  value={editForm.status}
-                  onChange={(e) => setEditForm({...editForm, status: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-black"
-                >
-                  <option value="Scheduled">Scheduled</option>
-                  <option value="In Progress">In Progress</option>
-                  <option value="Completed">Completed</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Cost
-                </label>
-                <input
-                  type="text"
-                  value={editForm.cost}
-                  onChange={(e) => setEditForm({...editForm, cost: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-black"
-                  placeholder="Cost"
-                />
-              </div>
-              <div className="col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Description
-                </label>
-                <textarea
-                  value={editForm.description}
-                  onChange={(e) => setEditForm({...editForm, description: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-black"
-                  placeholder="Maintenance description"
-                  rows="3"
-                />
-              </div>
-            </div>
-            <div className="flex justify-end space-x-3 mt-6">
-              <button
-                onClick={() => setShowEditModal(false)}
-                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleUpdateMaintenance}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                Update
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

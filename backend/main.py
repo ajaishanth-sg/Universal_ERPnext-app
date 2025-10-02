@@ -6,6 +6,7 @@ import random
 from routes.abroad_staff_router import router as abroad_staff_router
 from routes.accounts_payable_router import router as accounts_payable_router
 from routes.dashboard_router import router as dashboard_router
+from routes.debit_card_router import router as debit_card_router
 from routes.inventory_router import router as inventory_router
 from routes.purchase_invoice_router import router as purchase_invoice_router
 from routes.racing_payment_router import router as racing_payment_router
@@ -34,6 +35,7 @@ app.add_middleware(
 app.include_router(abroad_staff_router, prefix="/api/abroad-staff", tags=["abroad_staff"])
 app.include_router(accounts_payable_router, prefix="/api/accounts-payable", tags=["accounts_payable"])
 app.include_router(dashboard_router, prefix="/api/dashboard", tags=["dashboard"])
+app.include_router(debit_card_router, prefix="/api/debit-cards", tags=["debit_cards"])
 app.include_router(inventory_router, prefix="/api/inventory", tags=["inventory"])
 app.include_router(purchase_invoice_router, prefix="/api/purchase-invoices", tags=["purchase_invoices"])
 app.include_router(racing_payment_router, prefix="/api/racing-payments", tags=["racing_payments"])
