@@ -303,10 +303,377 @@ async def send_smtp_email(msg: MIMEMultipart):
         logging.error(f"Failed to send email: {str(e)}")
         return False
 
+def create_maintenance_alert_html(
+    recipient_name: str,
+    asset_name: str,
+    alert_type: str,
+    severity: str,
+    title: str,
+    description: str,
+    predicted_date: str,
+    recommended_action: str,
+    estimated_cost: float = None
+) -> str:
+    """Create HTML email template for maintenance alerts"""
+
+    # Color coding based on severity
+    severity_colors = {
+        'low': '#28a745',
+        'medium': '#ffc107',
+        'high': '#fd7e14',
+        'critical': '#dc3545'
+    }
+
+    severity_color = severity_colors.get(severity.lower(), '#6c757d')
+
+    html = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Maintenance Alert - {asset_name}</title>
+        <style>
+            body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+            .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+            .header {{ background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }}
+            .content {{ background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }}
+            .alert-card {{ background: white; padding: 25px; border-radius: 8px; margin: 20px 0; border-left: 5px solid {severity_color}; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }}
+            .severity-badge {{ display: inline-block; padding: 8px 16px; border-radius: 20px; font-weight: bold; font-size: 12px; text-transform: uppercase; background: {severity_color}; color: white; }}
+            .action-button {{ background: {severity_color}; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block; margin: 20px 0; }}
+            .cost-info {{ background: #e3f2fd; padding: 15px; border-radius: 5px; margin: 15px 0; }}
+            .footer {{ text-align: center; margin-top: 30px; color: #666; font-size: 12px; }}
+            .urgent {{ background: #ffebee; border: 1px solid #f44336; padding: 15px; border-radius: 5px; margin: 20px 0; }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>🔧 UniverserERP</h1>
+                <h2>Predictive Maintenance Alert</h2>
+            </div>
+
+            <div class="content">
+                <h3>Hello {recipient_name},</h3>
+
+                <p>Our predictive maintenance system has detected an issue that requires your attention:</p>
+
+                <div class="alert-card">
+                    <div style="display: flex; justify-content: between; align-items: center; margin-bottom: 15px;">
+                        <h4 style="margin: 0; color: #667eea;">{title}</h4>
+                        <span class="severity-badge">{severity.upper()}</span>
+                    </div>
+
+                    <p><strong>Asset:</strong> {asset_name}</p>
+                    <p><strong>Alert Type:</strong> {alert_type.replace('_', ' ').title()}</p>
+                    <p><strong>Description:</strong> {description}</p>
+                    <p><strong>Predicted Date:</strong> {predicted_date}</p>
+
+                    {f"<div class='cost-info'><strong>Estimated Cost:</strong> ${estimated_cost:,.2f}</div>" if estimated_cost else ""}
+
+                    <p><strong>Recommended Action:</strong> {recommended_action}</p>
+                </div>
+
+                {f'<div class="urgent"><strong>🚨 Critical Alert:</strong> This maintenance should be addressed immediately to prevent asset failure and ensure operational safety.</div>' if severity.lower() == 'critical' else ''}
+
+                <div style="text-align: center; margin: 30px 0;">
+                    <a href="{BASE_URL}/maintenance/alerts" class="action-button">
+                        📋 View All Maintenance Alerts
+                    </a>
+                </div>
+
+                <p>
+                    <strong>Why This Alert?</strong><br>
+                    Our AI-powered predictive maintenance system analyzes various factors including:
+                    • Asset usage patterns and mileage<br>
+                    • Historical maintenance data<br>
+                    • Asset age and condition<br>
+                    • Scheduled maintenance requirements
+                </p>
+
+                <p>
+                    <strong>Next Steps:</strong><br>
+                    1. Review the recommended action above<br>
+                    2. Schedule maintenance if needed<br>
+                    3. Update the alert status once resolved<br>
+                    4. Monitor asset performance regularly
+                </p>
+            </div>
+
+            <div class="footer">
+                <p>
+                    This maintenance alert was generated by UniverserERP Predictive Maintenance System.<br>
+                    For questions, please contact your fleet manager or maintenance team.<br>
+                    Generated on {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+                </p>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+
+    return html
+
+async def send_maintenance_alert_email(
+    recipient_email: str,
+    recipient_name: str = "Fleet Manager",
+    alert: 'PredictiveMaintenanceAlert' = None,
+    asset_name: str = None,
+    alert_type: str = None,
+    severity: str = None,
+    title: str = None,
+    description: str = None,
+    predicted_date: str = None,
+    recommended_action: str = None,
+    estimated_cost: float = None
+):
+    """Send maintenance alert email"""
+    try:
+        # If alert object is provided, extract data from it
+        if alert:
+            asset_name = alert.assetName
+            alert_type = alert.alertType
+            severity = alert.severity
+            title = alert.title
+            description = alert.description
+            predicted_date = alert.predictedFailureDate
+            recommended_action = alert.recommendedAction
+            estimated_cost = alert.estimatedCost
+
+        # Create HTML email
+        html_content = create_maintenance_alert_html(
+            recipient_name=recipient_name,
+            asset_name=asset_name,
+            alert_type=alert_type,
+            severity=severity,
+            title=title,
+            description=description,
+            predicted_date=predicted_date,
+            recommended_action=recommended_action,
+            estimated_cost=estimated_cost
+        )
+
+        # Create message
+        msg = MIMEMultipart('alternative')
+        msg['Subject'] = f"🚨 Maintenance Alert: {title}"
+        msg['From'] = FROM_EMAIL
+        msg['To'] = recipient_email
+
+        # Add HTML content
+        msg.attach(MIMEText(html_content, 'html'))
+
+        # Send email (implement actual SMTP sending)
+        print(f"Sending maintenance alert email to {recipient_email}")
+        print(f"Alert: {title}")
+        print(f"Asset: {asset_name}")
+        print(f"Severity: {severity}")
+
+        # TODO: Implement actual SMTP sending
+        # await send_smtp_email(msg)
+
+        return True
+
+    except Exception as e:
+        logging.error(f"Failed to send maintenance alert email: {str(e)}")
+        return False
+
+def create_payroll_journal_notification_html(
+    recipient_name: str,
+    batch_number: str,
+    total_amount: float,
+    total_entries: int,
+    period_name: str,
+    posted_by: str,
+    journal_entries: List[dict] = None
+) -> str:
+    """Create HTML email template for payroll journal notifications"""
+
+    html = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Payroll Journal Posted - {batch_number}</title>
+        <style>
+            body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+            .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+            .header {{ background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }}
+            .content {{ background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }}
+            .summary-card {{ background: white; padding: 25px; border-radius: 8px; margin: 20px 0; border-left: 5px solid #28a745; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }}
+            .amount {{ font-size: 24px; font-weight: bold; color: #28a745; text-align: center; margin: 20px 0; }}
+            .detail-table {{ width: 100%; border-collapse: collapse; margin: 20px 0; }}
+            .detail-table th, .detail-table td {{ padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }}
+            .detail-table th {{ background-color: #f8f9fa; font-weight: bold; }}
+            .footer {{ text-align: center; margin-top: 30px; color: #666; font-size: 12px; }}
+            .success {{ background: #d4edda; border: 1px solid #c3e6cb; padding: 15px; border-radius: 5px; margin: 20px 0; }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>💰 UniverserERP</h1>
+                <h2>Payroll Journal Posted</h2>
+            </div>
+
+            <div class="content">
+                <h3>Hello {recipient_name},</h3>
+
+                <p>Great news! The payroll journal has been successfully posted to the accounting system.</p>
+
+                <div class="success">
+                    <strong>✅ Journal Posting Complete</strong><br>
+                    All payroll entries have been processed and posted to the general ledger.
+                </div>
+
+                <div class="summary-card">
+                    <h4 style="margin-top: 0; color: #667eea;">Posting Summary</h4>
+                    <table class="detail-table">
+                        <tr>
+                            <th>Batch Number:</th>
+                            <td>{batch_number}</td>
+                        </tr>
+                        <tr>
+                            <th>Payroll Period:</th>
+                            <td>{period_name}</td>
+                        </tr>
+                        <tr>
+                            <th>Total Entries:</th>
+                            <td>{total_entries}</td>
+                        </tr>
+                        <tr>
+                            <th>Posted By:</th>
+                            <td>{posted_by}</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <div class="amount">
+                    Total Payroll Amount: ${total_amount:,.2f}
+                </div>
+
+                {f'''
+                <div style="background: white; padding: 20px; border-radius: 5px; margin: 20px 0;">
+                    <h4 style="margin-top: 0; color: #667eea;">Journal Entries Created</h4>
+                    <table class="detail-table">
+                        <thead>
+                            <tr>
+                                <th>Entry #</th>
+                                <th>Description</th>
+                                <th>Debit</th>
+                                <th>Credit</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                ''' + ''.join(f'''
+                            <tr>
+                                <td>{entry.get('entryNumber', 'N/A')}</td>
+                                <td>{entry.get('description', 'N/A')}</td>
+                                <td>${entry.get('totalDebit', 0):,.2f}</td>
+                                <td>${entry.get('totalCredit', 0):,.2f}</td>
+                            </tr>
+                ''' for entry in (journal_entries or [])) + '''
+                        </tbody>
+                    </table>
+                </div>
+                ''' if journal_entries else ''}
+
+                <p>
+                    <strong>What happens next?</strong><br>
+                    • Journal entries are now part of the general ledger<br>
+                    • Payroll expenses have been recorded in the appropriate accounts<br>
+                    • Tax liabilities have been updated<br>
+                    • Financial reports will reflect these transactions<br>
+                    • Employee payments should be processed according to schedule
+                </p>
+
+                <div style="text-align: center; margin: 30px 0;">
+                    <a href="{BASE_URL}/accounting/journals" style="background: #667eea; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">
+                        📊 View Journal Entries
+                    </a>
+                </div>
+
+                <p>
+                    <strong>Need Help?</strong><br>
+                    If you notice any discrepancies or need to make adjustments, please contact the accounting team immediately.
+                </p>
+            </div>
+
+            <div class="footer">
+                <p>
+                    This payroll journal notification was generated by UniverserERP Accounting System.<br>
+                    For questions, please contact your accounting department.<br>
+                    Generated on {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+                </p>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+
+    return html
+
+async def send_payroll_journal_notification(
+    recipient_email: str,
+    recipient_name: str = "Accounting Team",
+    batch: 'PayrollJournalBatch' = None,
+    journal_entries: List[dict] = None,
+    batch_number: str = None,
+    total_amount: float = None,
+    total_entries: int = None,
+    period_name: str = None,
+    posted_by: str = None
+):
+    """Send payroll journal notification email"""
+    try:
+        # If batch object is provided, extract data from it
+        if batch:
+            batch_number = batch.batchNumber
+            total_amount = batch.totalAmount
+            total_entries = batch.totalEntries
+            period_name = batch.payrollPeriodId
+            posted_by = batch.createdBy
+
+        # Create HTML email
+        html_content = create_payroll_journal_notification_html(
+            recipient_name=recipient_name,
+            batch_number=batch_number,
+            total_amount=total_amount,
+            total_entries=total_entries,
+            period_name=period_name,
+            posted_by=posted_by,
+            journal_entries=journal_entries
+        )
+
+        # Create message
+        msg = MIMEMultipart('alternative')
+        msg['Subject'] = f"✅ Payroll Journal Posted - {batch_number}"
+        msg['From'] = FROM_EMAIL
+        msg['To'] = recipient_email
+
+        # Add HTML content
+        msg.attach(MIMEText(html_content, 'html'))
+
+        # Send email (implement actual SMTP sending)
+        print(f"Sending payroll journal notification to {recipient_email}")
+        print(f"Batch: {batch_number}")
+        print(f"Amount: ${total_amount}")
+
+        # TODO: Implement actual SMTP sending
+        # await send_smtp_email(msg)
+
+        return True
+
+    except Exception as e:
+        logging.error(f"Failed to send payroll journal notification: {str(e)}")
+        return False
+
 # Email templates for different scenarios
 EMAIL_TEMPLATES = {
     "approval_request": create_approval_email_html,
     "capital_call": create_capital_call_alert_html,
+    "maintenance_alert": create_maintenance_alert_html,
+    "payroll_journal": create_payroll_journal_notification_html,
     "payment_reminder": None,  # Can add more templates as needed
     "fund_update": None
 }

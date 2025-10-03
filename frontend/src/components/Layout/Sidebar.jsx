@@ -130,6 +130,24 @@ const menuItems = [
       { id: "logistics", label: "Logistics" },
     ],
   },
+  {
+    id: "maintenance",
+    icon: Wrench,
+    label: "Maintenance",
+    submenu: [
+      { id: "predictive-maintenance", label: "Predictive Maintenance" },
+      { id: "fleet-maintenance", label: "Fleet Maintenance" },
+    ],
+  },
+  {
+    id: "payroll",
+    icon: Calculator,
+    label: "Payroll",
+    submenu: [
+      { id: "payroll-management", label: "Payroll Management" },
+      { id: "employee-management", label: "Employee Management" },
+    ],
+  },
   // {
   //   id: "reports",
   //   icon: FileText,

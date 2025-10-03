@@ -244,3 +244,106 @@ async def get_operations_dashboard():
         "racingEvents": racing_events,
         "consultants": consultants
     }
+
+# Treasury Reports endpoints
+@router.get("/treasury/daily-cash-position")
+async def get_daily_cash_position():
+    """Generate Daily Cash Position Report"""
+    try:
+        # Get bank accounts data (placeholder - would need actual bank accounts collection)
+        bank_accounts = [
+            {"name": "Primary Business", "balance": 1250000, "currency": "INR"},
+            {"name": "Property Management", "balance": 450000, "currency": "INR"},
+            {"name": "Investment Portfolio", "balance": 650000, "currency": "INR"},
+            {"name": "Operations Account", "balance": 100000, "currency": "INR"}
+        ]
+
+        total_cash = sum(account["balance"] for account in bank_accounts)
+        available_balance = total_cash  # Assuming all cash is available
+
+        return {
+            "reportDate": datetime.now().strftime('%Y-%m-%d'),
+            "totalCash": total_cash,
+            "availableBalance": available_balance,
+            "bankAccounts": bank_accounts,
+            "currency": "INR"
+        }
+    except Exception as e:
+        print(f"Error generating daily cash position report: {e}")
+        return {
+            "reportDate": datetime.now().strftime('%Y-%m-%d'),
+            "totalCash": 0,
+            "availableBalance": 0,
+            "bankAccounts": [],
+            "currency": "INR",
+            "error": str(e)
+        }
+
+@router.get("/treasury/monthly-liquidity")
+async def get_monthly_liquidity():
+    """Generate Monthly Liquidity Report"""
+    try:
+        current_month = datetime.now().strftime('%Y-%m')
+
+        # Calculate total liquidity (placeholder calculation)
+        total_liquidity = 2350000  # Would calculate from actual data
+
+        # Cash flow for the month (placeholder)
+        cash_flow = 125000  # Would calculate from transactions
+
+        # Liquidity ratio (placeholder)
+        liquidity_ratio = "2.5:1"  # Current assets to current liabilities
+
+        return {
+            "currentMonth": current_month,
+            "totalLiquidity": total_liquidity,
+            "cashFlow": cash_flow,
+            "liquidityRatio": liquidity_ratio,
+            "reportDate": datetime.now().strftime('%Y-%m-%d')
+        }
+    except Exception as e:
+        print(f"Error generating monthly liquidity report: {e}")
+        return {
+            "currentMonth": datetime.now().strftime('%Y-%m'),
+            "totalLiquidity": 0,
+            "cashFlow": 0,
+            "liquidityRatio": "0:0",
+            "reportDate": datetime.now().strftime('%Y-%m-%d'),
+            "error": str(e)
+        }
+
+@router.get("/treasury/investment-allocation")
+async def get_investment_allocation():
+    """Generate Investment Allocation Report"""
+    try:
+        # Investment allocation data (placeholder)
+        allocation = {
+            "stocks": 1500000,
+            "bonds": 800000,
+            "real_estate": 500000,
+            "cash_equivalents": 350000,
+            "alternative_investments": 200000
+        }
+
+        total_investments = sum(allocation.values())
+        performance = "+8.5%"  # YTD performance
+
+        return {
+            "totalInvestments": total_investments,
+            "allocation": allocation,
+            "performance": performance,
+            "reportDate": datetime.now().strftime('%Y-%m-%d'),
+            "allocationPercentages": {
+                key: f"{(value / total_investments * 100):.1f}%"
+                for key, value in allocation.items()
+            }
+        }
+    except Exception as e:
+        print(f"Error generating investment allocation report: {e}")
+        return {
+            "totalInvestments": 0,
+            "allocation": {},
+            "performance": "0%",
+            "reportDate": datetime.now().strftime('%Y-%m-%d'),
+            "error": str(e)
+        }

@@ -12,7 +12,8 @@ import {
   Download,
   Eye,
   AlertCircle,
-  CheckCircle
+  CheckCircle,
+  Printer
 } from 'lucide-react';
 
 const FinancialDashboard = ({ onNavigate, bankAccounts, recentTransactions, initialTab = 'overview' }) => {
@@ -32,6 +33,9 @@ const FinancialDashboard = ({ onNavigate, bankAccounts, recentTransactions, init
   const [debitCards, setDebitCards] = useState([]);
   const [debitCardAlerts, setDebitCardAlerts] = useState([]);
   const [debitCardSettings, setDebitCardSettings] = useState(null);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [currentReport, setCurrentReport] = useState(null);
+  const [reportData, setReportData] = useState(null);
 
   // Update activeTab when initialTab changes
   useEffect(() => {
@@ -101,6 +105,181 @@ const FinancialDashboard = ({ onNavigate, bankAccounts, recentTransactions, init
 
     fetchDebitCardsData();
   }, []);
+
+  // Generate and show report
+  const generateReport = async (reportType) => {
+    try {
+      let response;
+      switch (reportType) {
+        case 'daily-cash-position':
+          response = await fetch('http://localhost:5000/api/dashboard/treasury/daily-cash-position');
+          break;
+        case 'monthly-liquidity':
+          response = await fetch('http://localhost:5000/api/dashboard/treasury/monthly-liquidity');
+          break;
+        case 'investment-allocation':
+          response = await fetch('http://localhost:5000/api/dashboard/treasury/investment-allocation');
+          break;
+        default:
+          return;
+      }
+
+      if (response.ok) {
+        const data = await response.json();
+        setReportData(data);
+        setCurrentReport(reportType);
+        setShowReportModal(true);
+      } else {
+        alert(`Failed to generate ${reportType.replace('-', ' ')} report`);
+      }
+    } catch (error) {
+      console.error('Error generating report:', error);
+      alert(`Error generating ${reportType.replace('-', ' ')} report`);
+    }
+  };
+
+  // Download report as PDF
+  const downloadReport = () => {
+    if (!reportData) return;
+
+    const reportContent = generateReportContent(reportData, currentReport);
+    const blob = new Blob([reportContent], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${currentReport}-report.html`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  // Print report
+  const printReport = () => {
+    if (!reportData) return;
+
+    const printWindow = window.open('', '_blank');
+    const reportContent = generateReportContent(reportData, currentReport);
+
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>${currentReport.replace('-', ' ').toUpperCase()} Report</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 20px; }
+            .header { text-align: center; margin-bottom: 30px; }
+            .report-title { color: #1e3a8a; font-size: 24px; margin-bottom: 10px; }
+            .report-date { color: #666; font-size: 14px; }
+            .section { margin: 20px 0; }
+            .section-title { color: #1e3a8a; font-size: 18px; margin-bottom: 10px; border-bottom: 2px solid #1e3a8a; padding-bottom: 5px; }
+            .data-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee; }
+            .data-label { font-weight: bold; }
+            .data-value { color: #333; }
+            .summary-box { background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #1e3a8a; }
+            @media print { body { margin: 10px; } }
+          </style>
+        </head>
+        <body>
+          ${reportContent}
+        </body>
+      </html>
+    `);
+
+    printWindow.document.close();
+    printWindow.print();
+  };
+
+  // Generate report content
+  const generateReportContent = (data, type) => {
+    const formatCurrency = (amount) => `₹${amount?.toLocaleString() || '0'}`;
+    const formatDate = (dateString) => new Date(dateString).toLocaleDateString();
+
+    switch (type) {
+      case 'daily-cash-position':
+        return `
+          <div class="header">
+            <h1 class="report-title">Daily Cash Position Report</h1>
+            <p class="report-date">Generated on: ${formatDate(data.reportDate)}</p>
+          </div>
+          <div class="summary-box">
+            <div class="data-row">
+              <span class="data-label">Total Cash Available:</span>
+              <span class="data-value">${formatCurrency(data.totalCash)}</span>
+            </div>
+            <div class="data-row">
+              <span class="data-label">Available Balance:</span>
+              <span class="data-value">${formatCurrency(data.availableBalance)}</span>
+            </div>
+          </div>
+          <div class="section">
+            <h2 class="section-title">Bank Account Details</h2>
+            ${data.bankAccounts?.map(account => `
+              <div class="data-row">
+                <span class="data-label">${account.name} (${account.bank}):</span>
+                <span class="data-value">${formatCurrency(account.balance)} ${account.currency}</span>
+              </div>
+            `).join('') || '<p>No bank account data available</p>'}
+          </div>
+        `;
+
+      case 'monthly-liquidity':
+        return `
+          <div class="header">
+            <h1 class="report-title">Monthly Liquidity Report</h1>
+            <p class="report-date">Generated on: ${formatDate(data.reportDate)}</p>
+          </div>
+          <div class="summary-box">
+            <div class="data-row">
+              <span class="data-label">Report Month:</span>
+              <span class="data-value">${data.currentMonth || 'N/A'}</span>
+            </div>
+            <div class="data-row">
+              <span class="data-label">Total Liquidity:</span>
+              <span class="data-value">${formatCurrency(data.totalLiquidity)}</span>
+            </div>
+            <div class="data-row">
+              <span class="data-label">Monthly Cash Flow:</span>
+              <span class="data-value">${formatCurrency(data.cashFlow)}</span>
+            </div>
+            <div class="data-row">
+              <span class="data-label">Liquidity Ratio:</span>
+              <span class="data-value">${data.liquidityRatio || 'N/A'}</span>
+            </div>
+          </div>
+        `;
+
+      case 'investment-allocation':
+        return `
+          <div class="header">
+            <h1 class="report-title">Investment Allocation Report</h1>
+            <p class="report-date">Generated on: ${formatDate(data.reportDate)}</p>
+          </div>
+          <div class="summary-box">
+            <div class="data-row">
+              <span class="data-label">Total Investment Value:</span>
+              <span class="data-value">${formatCurrency(data.totalInvestments)}</span>
+            </div>
+            <div class="data-row">
+              <span class="data-label">Year-to-Date Performance:</span>
+              <span class="data-value">${data.performance || 'N/A'}</span>
+            </div>
+          </div>
+          <div class="section">
+            <h2 class="section-title">Allocation Breakdown</h2>
+            ${data.allocation ? Object.entries(data.allocation).map(([key, value]) => `
+              <div class="data-row">
+                <span class="data-label">${key.replace('_', ' ').toUpperCase()}:</span>
+                <span class="data-value">${formatCurrency(value)} (${data.allocationPercentages?.[key] || '0%'})</span>
+              </div>
+            `).join('') : '<p>No allocation data available</p>'}
+          </div>
+        `;
+
+      default:
+        return '<p>Report type not supported</p>';
+    }
+  };
 
   // Refresh debit cards data when modal opens
   useEffect(() => {
@@ -499,14 +678,26 @@ const FinancialDashboard = ({ onNavigate, bankAccounts, recentTransactions, init
     <div className="border p-4 rounded-lg">
       <h3 className="font-medium text-gray-800 mb-2">Treasury Reports</h3>
       <div className="space-y-2">
-        <button className="w-full p-2 text-left bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-          Daily Cash Position Report
+        <button
+          onClick={() => generateReport('daily-cash-position')}
+          className="w-full p-3 text-left bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors flex items-center justify-between group"
+        >
+          <span>Daily Cash Position Report</span>
+          <Eye className="w-4 h-4 text-gray-400 group-hover:text-blue-600" />
         </button>
-        <button className="w-full p-2 text-left bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-          Monthly Liquidity Report
+        <button
+          onClick={() => generateReport('monthly-liquidity')}
+          className="w-full p-3 text-left bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors flex items-center justify-between group"
+        >
+          <span>Monthly Liquidity Report</span>
+          <Eye className="w-4 h-4 text-gray-400 group-hover:text-blue-600" />
         </button>
-        <button className="w-full p-2 text-left bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-          Investment Allocation Report
+        <button
+          onClick={() => generateReport('investment-allocation')}
+          className="w-full p-3 text-left bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors flex items-center justify-between group"
+        >
+          <span>Investment Allocation Report</span>
+          <Eye className="w-4 h-4 text-gray-400 group-hover:text-blue-600" />
         </button>
       </div>
     </div>
@@ -753,6 +944,106 @@ const FinancialDashboard = ({ onNavigate, bankAccounts, recentTransactions, init
 
 
     </div>
+
+    {/* Report Modal */}
+    {showReportModal && reportData && (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="p-6 border-b border-gray-200">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-bold text-gray-800">
+                {currentReport?.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())} Report
+              </h2>
+              <div className="flex items-center space-x-3">
+                <button
+                  onClick={downloadReport}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center space-x-2"
+                >
+                  <Download className="w-4 h-4" />
+                  <span>Download</span>
+                </button>
+                <button
+                  onClick={printReport}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center space-x-2"
+                >
+                  <Printer className="w-4 h-4" />
+                  <span>Print</span>
+                </button>
+                <button
+                  onClick={() => setShowReportModal(false)}
+                  className="p-2 text-gray-400 hover:text-gray-600"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="p-6">
+            <style jsx>{`
+              .report-content {
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                line-height: 1.6;
+                color: #333;
+              }
+              .report-content .header {
+                text-align: center;
+                margin-bottom: 30px;
+                padding-bottom: 20px;
+                border-bottom: 2px solid #1e3a8a;
+              }
+              .report-content .report-title {
+                color: #1e3a8a;
+                font-size: 24px;
+                margin-bottom: 10px;
+                font-weight: bold;
+              }
+              .report-content .report-date {
+                color: #666;
+                font-size: 14px;
+              }
+              .report-content .section {
+                margin: 20px 0;
+              }
+              .report-content .section-title {
+                color: #1e3a8a;
+                font-size: 18px;
+                margin-bottom: 10px;
+                border-bottom: 2px solid #1e3a8a;
+                padding-bottom: 5px;
+                font-weight: bold;
+              }
+              .report-content .data-row {
+                display: flex;
+                justify-content: space-between;
+                padding: 8px 0;
+                border-bottom: 1px solid #eee;
+              }
+              .report-content .data-label {
+                font-weight: bold;
+                color: #333;
+              }
+              .report-content .data-value {
+                color: #333;
+              }
+              .report-content .summary-box {
+                background: #f8f9fa;
+                padding: 15px;
+                border-radius: 8px;
+                margin: 15px 0;
+                border-left: 4px solid #1e3a8a;
+              }
+            `}</style>
+            <div
+              className="report-content"
+              dangerouslySetInnerHTML={{
+                __html: generateReportContent(reportData, currentReport)
+              }}
+            />
+          </div>
+        </div>
+      </div>
+    )}
 
     {/* Modals */}
     {showAddInvestmentModal && (

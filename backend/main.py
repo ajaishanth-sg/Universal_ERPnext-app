@@ -25,6 +25,8 @@ from routes.travel_trip_router import router as travel_trip_router
 from routes.vehicle_router import router as vehicle_router
 from routes.email_approval_router import router as email_approval_router
 from routes.capital_call_router import router as capital_call_router
+from routes.maintenance_alert_router import router as maintenance_alert_router
+from routes.payroll_router import router as payroll_router
 
 app = FastAPI()
 
@@ -58,6 +60,8 @@ app.include_router(travel_trip_router, prefix="/api/travel-trips", tags=["travel
 app.include_router(vehicle_router, prefix="/api/vehicles", tags=["vehicles"])
 app.include_router(email_approval_router, prefix="/api/email-approvals", tags=["email_approvals"])
 app.include_router(capital_call_router, prefix="/api/capital-calls", tags=["capital_calls"])
+app.include_router(maintenance_alert_router, prefix="/api/maintenance-alerts", tags=["maintenance_alerts"])
+app.include_router(payroll_router, prefix="/api/payroll", tags=["payroll"])
 
 @app.get("/weather")
 async def get_weather(

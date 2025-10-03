@@ -31,6 +31,8 @@ import TravelCoordinationDashboard from './components/Dashboard/TravelCoordinati
 import TravelDeskDashboard from './components/Dashboard/TravelDeskDashboard';
 import CapitalCallDashboard from './components/Dashboard/CapitalCallDashboard';
 import EmailApprovalHandler from './components/EmailApprovalHandler';
+import PredictiveMaintenanceDashboard from './components/Dashboard/PredictiveMaintenanceDashboard';
+import PayrollManagementDashboard from './components/Dashboard/PayrollManagementDashboard';
 
 function App() {
   const [activeDashboard, setActiveDashboard] = useState('dashboard');
@@ -173,6 +175,10 @@ function App() {
         return 'Team Management';
       case 'travel-coordination':
         return 'Travel Coordination';
+      case 'predictive-maintenance':
+        return 'Predictive Maintenance';
+      case 'payroll-management':
+        return 'Payroll Management';
       default:
         return 'Executive Dashboard';
     }
@@ -228,7 +234,7 @@ function App() {
       case 'abroad-house':
         return <AbroadHouseDashboard onBack={() => setActiveDashboard('house-management')} />;
       case 'maintenance':
-        return <MaintenanceDashboard onBack={() => setActiveDashboard('house-management')} />;
+        return <PredictiveMaintenanceDashboard onNavigate={setActiveDashboard} />;
       case 'maintenance-scheduling':
         return <MaintenanceSchedulingDashboard onBack={() => setActiveDashboard('house-management')} />;
       // Fleet Management Cases - FIXED
@@ -257,6 +263,10 @@ function App() {
         return <TravelDeskDashboard />;
       case 'capital-calls':
         return <CapitalCallDashboard onNavigate={setActiveDashboard} />;
+      case 'predictive-maintenance':
+        return <PredictiveMaintenanceDashboard onNavigate={setActiveDashboard} />;
+      case 'payroll-management':
+        return <PayrollManagementDashboard onNavigate={setActiveDashboard} />;
       default:
         return <ExecutiveDashboard />;
     }

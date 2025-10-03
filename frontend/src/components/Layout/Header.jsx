@@ -516,7 +516,7 @@ function Header({ currentDashboard = 'Executive Dashboard', onToggleSidebar, onN
           <div className="relative hidden lg:block">
             <button
               onClick={() => setShowNewMenu(!showNewMenu)}
-              className="flex items-center space-x-2 py-2 px-4 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl hover:shadow-lg transition-all"
+              className="flex items-center space-x-2 py-2 px-4 bg-blue-900 text-white rounded-xl hover:bg-blue-800 hover:shadow-lg transition-all"
             >
               <Plus className="h-4 w-4" />
               <span className="text-sm font-medium">New</span>
