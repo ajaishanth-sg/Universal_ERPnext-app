@@ -89,74 +89,27 @@ const PayrollManagementDashboard = () => {
     }
   ];
 
-  const recentEmployees = [
-    {
-      id: 1,
-      name: "Ahmed Al-Rashid",
-      position: "Fleet Manager",
-      department: "Operations",
-      salary: "$5,500",
-      status: "Active",
-      joinDate: "2023-06-15"
-    },
-    {
-      id: 2,
-      name: "Sarah Johnson",
-      position: "Accountant",
-      department: "Finance",
-      salary: "$4,200",
-      status: "Active",
-      joinDate: "2023-08-20"
-    },
-    {
-      id: 3,
-      name: "Mohammed Hassan",
-      position: "Driver",
-      department: "Operations",
-      salary: "$3,800",
-      status: "Active",
-      joinDate: "2023-09-10"
-    },
-    {
-      id: 4,
-      name: "Emily Davis",
-      position: "HR Manager",
-      department: "Human Resources",
-      salary: "$5,000",
-      status: "Active",
-      joinDate: "2023-07-05"
-    }
-  ];
+  // Transform employees data for display
+  const displayEmployees = employees.map((emp, index) => ({
+    id: emp.id || index + 1,
+    name: `${emp.firstName} ${emp.lastName}`,
+    position: emp.position,
+    department: emp.department,
+    salary: `$${emp.baseSalary?.toLocaleString() || '0'}`,
+    status: emp.status,
+    joinDate: emp.hireDate
+  }));
 
-  const recentPayrollPeriods = [
-    {
-      id: 1,
-      name: "January 2024",
-      status: "Closed",
-      payDate: "2024-01-31",
-      totalEmployees: 12,
-      totalGross: 48500,
-      totalNet: 41250
-    },
-    {
-      id: 2,
-      name: "December 2023",
-      status: "Posted",
-      payDate: "2023-12-31",
-      totalEmployees: 10,
-      totalGross: 45200,
-      totalNet: 38400
-    },
-    {
-      id: 3,
-      name: "November 2023",
-      status: "Posted",
-      payDate: "2023-11-30",
-      totalEmployees: 10,
-      totalGross: 44800,
-      totalNet: 38100
-    }
-  ];
+  // Transform payroll periods data for display
+  const displayPayrollPeriods = payrollPeriods.map((period, index) => ({
+    id: period.id || index + 1,
+    name: period.periodName,
+    status: period.status,
+    payDate: period.payDate,
+    totalEmployees: period.totalEmployees,
+    totalGross: period.totalGrossPay,
+    totalNet: period.totalNetPay
+  }));
 
   const tabs = [
     { id: 'overview', label: 'Overview' },
@@ -241,7 +194,7 @@ const PayrollManagementDashboard = () => {
             </button>
           </div>
           <div className="space-y-4">
-            {recentEmployees.map((employee) => (
+            {displayEmployees.length > 0 ? displayEmployees.map((employee) => (
               <div key={employee.id} className="p-4 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="text-sm font-medium text-gray-800">
