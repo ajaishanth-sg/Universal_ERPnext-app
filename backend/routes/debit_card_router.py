@@ -13,16 +13,22 @@ settings_collection = db.debit_card_settings
 # Debit Cards CRUD
 @router.get("/")
 async def get_debit_cards():
-    items = []
-    async for item in debit_cards_collection.find():
-        # Convert ObjectId to string and set both _id and id fields
-        item["_id"] = str(item["_id"])
-        item["id"] = str(item["_id"])
-        # Remove the MongoDB _id field from the item dict before creating DebitCard
-        item_copy = item.copy()
-        item_copy.pop("_id", None)  # Remove _id to avoid conflicts
-        items.append(DebitCard(**item_copy))
-    return items
+    try:
+        items = []
+        async for item in debit_cards_collection.find():
+            # Convert ObjectId to string and set both _id and id fields
+            item["_id"] = str(item["_id"])
+            item["id"] = str(item["_id"])
+            # Remove the MongoDB _id field from the item dict before creating DebitCard
+            item_copy = item.copy()
+            item_copy.pop("_id", None)  # Remove _id to avoid conflicts
+            items.append(DebitCard(**item_copy))
+        return items
+    except Exception as e:
+        print(f"Error fetching debit cards: {e}")
+        import traceback
+        traceback.print_exc()
+        return []
 
 @router.post("/")
 async def create_debit_card(item: DebitCard, background_tasks: BackgroundTasks):
@@ -71,11 +77,17 @@ async def delete_debit_card(item_id: str):
 # Alerts
 @router.get("/alerts/")
 async def get_alerts():
-    items = []
-    async for item in alerts_collection.find():
-        item["_id"] = str(item["_id"])
-        items.append(DebitCardAlert(**item))
-    return items
+    try:
+        items = []
+        async for item in alerts_collection.find():
+            item["_id"] = str(item["_id"])
+            items.append(DebitCardAlert(**item))
+        return items
+    except Exception as e:
+        print(f"Error fetching alerts: {e}")
+        import traceback
+        traceback.print_exc()
+        return []
 
 @router.post("/alerts/")
 async def create_alert(item: DebitCardAlert):
@@ -98,13 +110,20 @@ async def mark_alert_read(alert_id: str):
 # Settings
 @router.get("/settings/")
 async def get_settings():
-    # Return default settings if none exist
-    settings = await settings_collection.find_one()
-    if not settings:
-        default_settings = DebitCardSettings()
-        return default_settings
-    settings["_id"] = str(settings["_id"])
-    return DebitCardSettings(**settings)
+    try:
+        # Return default settings if none exist
+        settings = await settings_collection.find_one()
+        if not settings:
+            default_settings = DebitCardSettings()
+            return default_settings
+        settings["_id"] = str(settings["_id"])
+        return DebitCardSettings(**settings)
+    except Exception as e:
+        print(f"Error fetching settings: {e}")
+        import traceback
+        traceback.print_exc()
+        # Return default settings on error
+        return DebitCardSettings()
 
 @router.post("/settings/")
 async def update_settings(item: DebitCardSettings):

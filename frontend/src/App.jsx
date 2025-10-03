@@ -29,6 +29,8 @@ import VehicleManagementDashboard from './components/Dashboard/VehicleManagement
 import TeamManagementDashboard from './components/Dashboard/TeamManagementDashboard';
 import TravelCoordinationDashboard from './components/Dashboard/TravelCoordinationDashboard';
 import TravelDeskDashboard from './components/Dashboard/TravelDeskDashboard';
+import CapitalCallDashboard from './components/Dashboard/CapitalCallDashboard';
+import EmailApprovalHandler from './components/EmailApprovalHandler';
 
 function App() {
   const [activeDashboard, setActiveDashboard] = useState('dashboard');
@@ -253,6 +255,8 @@ function App() {
         return <LogisticsDashboard onBack={() => setActiveDashboard('racing-operations')} />;
       case 'travel-desk':
         return <TravelDeskDashboard />;
+      case 'capital-calls':
+        return <CapitalCallDashboard onNavigate={setActiveDashboard} />;
       default:
         return <ExecutiveDashboard />;
     }

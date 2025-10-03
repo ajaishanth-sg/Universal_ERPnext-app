@@ -379,6 +379,304 @@ const LeaveRequestForm = ({ request = null, onSave, onCancel }) => {
   );
 };
 
+// Office Support Request Form Component
+const OfficeSupportRequestForm = ({ request = null, onSave, onCancel, supportType = 'General' }) => {
+  const [formData, setFormData] = useState(request || {
+    title: '',
+    description: '',
+    priority: 'Medium',
+    urgency: 'Normal',
+    category: supportType,
+    location: '',
+    contactPerson: '',
+    contactPhone: '',
+    contactEmail: '',
+    preferredDate: '',
+    preferredTime: '',
+    status: 'Pending Approval'
+  });
+
+  const [errors, setErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const categoryOptions = {
+    'IT Support': ['Computer Hardware', 'Software Issues', 'Network Problems', 'Email Issues', 'Printer Problems', 'Other'],
+    'Maintenance': ['HVAC', 'Electrical', 'Plumbing', 'Cleaning', 'Landscaping', 'Security', 'Renovation', 'Other'],
+    'Communications': ['Phone Issues', 'Internet Problems', 'Conference Equipment', 'Mobile Devices', 'Other'],
+    'Facilities': ['Office Supplies', 'Furniture', 'Equipment', 'Access Cards', 'Other'],
+    'Mail Services': ['Courier Services', 'Postage Issues', 'Package Tracking', 'Mail Collection', 'Other'],
+    'Security': ['Access Control', 'Security Systems', 'Emergency Response', 'Surveillance', 'Other']
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+
+    if (!formData.title.trim()) {
+      newErrors.title = 'Request title is required';
+    }
+
+    if (!formData.description.trim()) {
+      newErrors.description = 'Description is required';
+    }
+
+    if (!formData.location) {
+      newErrors.location = 'Location is required';
+    }
+
+    if (!formData.contactPerson.trim()) {
+      newErrors.contactPerson = 'Contact person is required';
+    }
+
+    if (!formData.contactPhone.trim()) {
+      newErrors.contactPhone = 'Contact phone is required';
+    } else if (!/^\+?[\d\s\-\(\)]+$/.test(formData.contactPhone)) {
+      newErrors.contactPhone = 'Please enter a valid phone number';
+    }
+
+    if (formData.contactEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.contactEmail)) {
+      newErrors.contactEmail = 'Please enter a valid email address';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!validateForm()) {
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const currentDate = new Date().toISOString();
+      const requestPayload = {
+        ...formData,
+        id: request?.id || Date.now(),
+        property: 'Main Office',
+        location: formData.location || 'Main Office',
+        requestedDate: new Date().toISOString().split('T')[0],
+        createdDate: currentDate,
+        lastUpdated: currentDate,
+        createdBy: 'Current User' // This should be replaced with actual user info
+      };
+
+      await onSave(requestPayload);
+    } catch (error) {
+      console.error('Error submitting request:', error);
+      setErrors({ submit: 'Failed to submit request. Please try again.' });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+        <div className="p-6 border-b border-gray-200">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-semibold">
+              {request ? 'Edit' : 'New'} {supportType} Request
+            </h2>
+            <button onClick={onCancel} className="p-2 hover:bg-gray-100 rounded-lg">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+
+        <div className="p-6 space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Request Title *
+              </label>
+              <input
+                type="text"
+                value={formData.title}
+                onChange={(e) => setFormData({...formData, title: e.target.value})}
+                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  errors.title ? 'border-red-500' : 'border-gray-200'
+                }`}
+                placeholder={`Brief description of your ${supportType.toLowerCase()} request`}
+                required
+              />
+              {errors.title && <p className="mt-1 text-sm text-red-600">{errors.title}</p>}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Priority Level *
+              </label>
+              <select
+                value={formData.priority}
+                onChange={(e) => setFormData({...formData, priority: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              >
+                <option value="Low">Low</option>
+                <option value="Medium">Medium</option>
+                <option value="High">High</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Urgency *
+              </label>
+              <select
+                value={formData.urgency}
+                onChange={(e) => setFormData({...formData, urgency: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              >
+                <option value="Routine">Routine</option>
+                <option value="Normal">Normal</option>
+                <option value="Important">Important</option>
+                <option value="Critical">Critical</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Location/Department *
+              </label>
+              <select
+                value={formData.location}
+                onChange={(e) => setFormData({...formData, location: e.target.value})}
+                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  errors.location ? 'border-red-500' : 'border-gray-200'
+                }`}
+                required
+              >
+                <option value="">Select Location</option>
+                <option value="Main Office">Main Office</option>
+                <option value="Muscat Office">Muscat Office</option>
+                <option value="Dubai Office">Dubai Office</option>
+                <option value="London Office">London Office</option>
+                <option value="Monaco Office">Monaco Office</option>
+                <option value="Abroad Office">Abroad Office</option>
+              </select>
+              {errors.location && <p className="mt-1 text-sm text-red-600">{errors.location}</p>}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Preferred Date
+              </label>
+              <input
+                type="date"
+                value={formData.preferredDate}
+                onChange={(e) => setFormData({...formData, preferredDate: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Preferred Time
+              </label>
+              <input
+                type="time"
+                value={formData.preferredTime}
+                onChange={(e) => setFormData({...formData, preferredTime: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Contact Person *
+              </label>
+              <input
+                type="text"
+                value={formData.contactPerson}
+                onChange={(e) => setFormData({...formData, contactPerson: e.target.value})}
+                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  errors.contactPerson ? 'border-red-500' : 'border-gray-200'
+                }`}
+                required
+              />
+              {errors.contactPerson && <p className="mt-1 text-sm text-red-600">{errors.contactPerson}</p>}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Contact Phone *
+              </label>
+              <input
+                type="tel"
+                value={formData.contactPhone}
+                onChange={(e) => setFormData({...formData, contactPhone: e.target.value})}
+                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  errors.contactPhone ? 'border-red-500' : 'border-gray-200'
+                }`}
+                required
+              />
+              {errors.contactPhone && <p className="mt-1 text-sm text-red-600">{errors.contactPhone}</p>}
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Contact Email
+              </label>
+              <input
+                type="email"
+                value={formData.contactEmail}
+                onChange={(e) => setFormData({...formData, contactEmail: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Detailed Description *
+              </label>
+              <textarea
+                value={formData.description}
+                onChange={(e) => setFormData({...formData, description: e.target.value})}
+                rows="4"
+                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  errors.description ? 'border-red-500' : 'border-gray-200'
+                }`}
+                placeholder={`Please provide detailed information about your ${supportType.toLowerCase()} request...`}
+                required
+              />
+              {errors.description && <p className="mt-1 text-sm text-red-600">{errors.description}</p>}
+            </div>
+          </div>
+
+          {errors.submit && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+              <p className="text-sm text-red-600">{errors.submit}</p>
+            </div>
+          )}
+
+          <div className="flex justify-end space-x-3 pt-6 border-t">
+            <button
+              type="button"
+              onClick={onCancel}
+              disabled={isSubmitting}
+              className="px-4 py-2 text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSubmit}
+              disabled={isSubmitting}
+              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+            >
+              {isSubmitting && <RefreshCw className="w-4 h-4 animate-spin" />}
+              <span>{isSubmitting ? 'Submitting...' : 'Submit Request'}</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // Travel Request Form Component
 const TravelRequestForm = ({ request = null, onSave, onCancel }) => {
   const [formData, setFormData] = useState(request || {
@@ -1185,6 +1483,9 @@ const TravelDesk = ({ travelRequests, onAddRequest, onEditRequest, onDeleteReque
 const HRDashboard = ({ initialTab = 'overview' }) => {
   const [activeTab, setActiveTab] = useState(initialTab);
   const [showOfficeSupportModal, setShowOfficeSupportModal] = useState(false);
+  const [showOfficeSupportForm, setShowOfficeSupportForm] = useState(false);
+  const [selectedSupportType, setSelectedSupportType] = useState('General');
+  const [officeSupportRequests, setOfficeSupportRequests] = useState([]);
 
   // Update activeTab when initialTab changes
   useEffect(() => {
@@ -1352,6 +1653,46 @@ const HRDashboard = ({ initialTab = 'overview' }) => {
     setTravelRequests(travelRequests.filter(req => req.id !== requestId));
   };
 
+  // Office Support CRUD Operations
+  const handleAddOfficeSupportRequest = async (requestData) => {
+    try {
+      // Send request to backend API
+      const response = await fetch('http://localhost:8000/api/maintenance-requests/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestData),
+      });
+
+      if (response.ok) {
+        const savedRequest = await response.json();
+        setOfficeSupportRequests([...officeSupportRequests, savedRequest]);
+      } else {
+        console.error('Failed to save office support request');
+        // For now, still add to local state as fallback
+        setOfficeSupportRequests([...officeSupportRequests, requestData]);
+      }
+    } catch (error) {
+      console.error('Error saving office support request:', error);
+      // Add to local state as fallback
+      setOfficeSupportRequests([...officeSupportRequests, requestData]);
+    }
+  };
+
+  const handleEditOfficeSupportRequest = (requestData) => {
+    setOfficeSupportRequests(officeSupportRequests.map(req => req.id === requestData.id ? requestData : req));
+  };
+
+  const handleDeleteOfficeSupportRequest = (requestId) => {
+    setOfficeSupportRequests(officeSupportRequests.filter(req => req.id !== requestId));
+  };
+
+  const handleOpenOfficeSupportForm = (supportType) => {
+    setSelectedSupportType(supportType);
+    setShowOfficeSupportForm(true);
+  };
+
   const hrStats = [
     {
       title: "Total Employees",
@@ -1424,17 +1765,30 @@ const HRDashboard = ({ initialTab = 'overview' }) => {
       case 'office-support':
         return (
           <div className="space-y-6">
-            {/* Office Support Content */}
+            {/* Office Support Header */}
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">Office Support Services</h2>
+                <p className="text-gray-600">Request assistance for various office support services</p>
+              </div>
+              <div className="flex items-center space-x-3">
+                <button className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center space-x-2">
+                  <FileText className="w-4 h-4" />
+                  <span>Request History</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Office Support Services Grid */}
             <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">Office Support Services</h2>
-              <p className="text-gray-600 mb-6">Access various office support services and request assistance.</p>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Available Services</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <button
-                  onClick={() => setShowOfficeSupportModal(true)}
-                  className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-left"
+                  onClick={() => handleOpenOfficeSupportForm('IT Support')}
+                  className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-left group"
                 >
                   <div className="flex items-center space-x-3">
-                    <div className="p-2 bg-blue-100 rounded-lg">
+                    <div className="p-2 bg-blue-100 rounded-lg group-hover:bg-blue-200 transition-colors">
                       <Settings className="w-5 h-5 text-blue-600" />
                     </div>
                     <div>
@@ -1444,11 +1798,11 @@ const HRDashboard = ({ initialTab = 'overview' }) => {
                   </div>
                 </button>
                 <button
-                  onClick={() => setShowOfficeSupportModal(true)}
-                  className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-left"
+                  onClick={() => handleOpenOfficeSupportForm('Maintenance')}
+                  className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-left group"
                 >
                   <div className="flex items-center space-x-3">
-                    <div className="p-2 bg-green-100 rounded-lg">
+                    <div className="p-2 bg-green-100 rounded-lg group-hover:bg-green-200 transition-colors">
                       <Building className="w-5 h-5 text-green-600" />
                     </div>
                     <div>
@@ -1458,11 +1812,11 @@ const HRDashboard = ({ initialTab = 'overview' }) => {
                   </div>
                 </button>
                 <button
-                  onClick={() => setShowOfficeSupportModal(true)}
-                  className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-left"
+                  onClick={() => handleOpenOfficeSupportForm('Communications')}
+                  className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-left group"
                 >
                   <div className="flex items-center space-x-3">
-                    <div className="p-2 bg-purple-100 rounded-lg">
+                    <div className="p-2 bg-purple-100 rounded-lg group-hover:bg-purple-200 transition-colors">
                       <Phone className="w-5 h-5 text-purple-600" />
                     </div>
                     <div>
@@ -1472,11 +1826,11 @@ const HRDashboard = ({ initialTab = 'overview' }) => {
                   </div>
                 </button>
                 <button
-                  onClick={() => setShowOfficeSupportModal(true)}
-                  className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-left"
+                  onClick={() => handleOpenOfficeSupportForm('Facilities')}
+                  className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-left group"
                 >
                   <div className="flex items-center space-x-3">
-                    <div className="p-2 bg-orange-100 rounded-lg">
+                    <div className="p-2 bg-orange-100 rounded-lg group-hover:bg-orange-200 transition-colors">
                       <Briefcase className="w-5 h-5 text-orange-600" />
                     </div>
                     <div>
@@ -1486,11 +1840,11 @@ const HRDashboard = ({ initialTab = 'overview' }) => {
                   </div>
                 </button>
                 <button
-                  onClick={() => setShowOfficeSupportModal(true)}
-                  className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-left"
+                  onClick={() => handleOpenOfficeSupportForm('Mail Services')}
+                  className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-left group"
                 >
                   <div className="flex items-center space-x-3">
-                    <div className="p-2 bg-red-100 rounded-lg">
+                    <div className="p-2 bg-red-100 rounded-lg group-hover:bg-red-200 transition-colors">
                       <Mail className="w-5 h-5 text-red-600" />
                     </div>
                     <div>
@@ -1500,11 +1854,11 @@ const HRDashboard = ({ initialTab = 'overview' }) => {
                   </div>
                 </button>
                 <button
-                  onClick={() => setShowOfficeSupportModal(true)}
-                  className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-left"
+                  onClick={() => handleOpenOfficeSupportForm('Security')}
+                  className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-left group"
                 >
                   <div className="flex items-center space-x-3">
-                    <div className="p-2 bg-yellow-100 rounded-lg">
+                    <div className="p-2 bg-yellow-100 rounded-lg group-hover:bg-yellow-200 transition-colors">
                       <CreditCard className="w-5 h-5 text-yellow-600" />
                     </div>
                     <div>
@@ -1515,6 +1869,45 @@ const HRDashboard = ({ initialTab = 'overview' }) => {
                 </button>
               </div>
             </div>
+
+            {/* Recent Requests */}
+            {officeSupportRequests.length > 0 && (
+              <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Requests</h3>
+                <div className="space-y-4">
+                  {officeSupportRequests.slice(0, 5).map((request) => (
+                    <div key={request.id} className="p-4 border border-gray-200 rounded-lg">
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between mb-2">
+                            <h4 className="text-sm font-medium text-gray-900">{request.title}</h4>
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                              request.status === 'Pending Approval' ? 'bg-yellow-100 text-yellow-800' :
+                              request.status === 'In Progress' ? 'bg-blue-100 text-blue-800' :
+                              request.status === 'Completed' ? 'bg-green-100 text-green-800' :
+                              'bg-red-100 text-red-800'
+                            }`}>
+                              {request.status}
+                            </span>
+                          </div>
+                          <div className="grid grid-cols-2 gap-4 text-xs text-gray-500">
+                            <div className="flex items-center space-x-1">
+                              <span className="font-medium">{request.category}</span>
+                            </div>
+                            <div className="flex items-center space-x-1">
+                              <span>{request.location}</span>
+                            </div>
+                            <div className="col-span-2">
+                              <p className="text-gray-900">{request.description}</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         );
       default:
@@ -1691,97 +2084,16 @@ const HRDashboard = ({ initialTab = 'overview' }) => {
       {/* Main Content */}
       {renderContent()}
 
-      {/* Office Support Modal */}
-      {showOfficeSupportModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg max-w-2xl w-full">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold">Office Support Services</h3>
-              <button onClick={() => setShowOfficeSupportModal(false)} className="p-2 hover:bg-gray-100 rounded-lg">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <button className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-left">
-                <div className="flex items-center space-x-3">
-                  <div className="p-2 bg-blue-100 rounded-lg">
-                    <Settings className="w-5 h-5 text-blue-600" />
-                  </div>
-                  <div>
-                    <h4 className="font-medium text-gray-900">IT Support</h4>
-                    <p className="text-sm text-gray-500">Technical assistance</p>
-                  </div>
-                </div>
-              </button>
-              <button className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-left">
-                <div className="flex items-center space-x-3">
-                  <div className="p-2 bg-green-100 rounded-lg">
-                    <Building className="w-5 h-5 text-green-600" />
-                  </div>
-                  <div>
-                    <h4 className="font-medium text-gray-900">Maintenance</h4>
-                    <p className="text-sm text-gray-500">Facility repairs</p>
-                  </div>
-                </div>
-              </button>
-              <button className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-left">
-                <div className="flex items-center space-x-3">
-                  <div className="p-2 bg-purple-100 rounded-lg">
-                    <Phone className="w-5 h-5 text-purple-600" />
-                  </div>
-                  <div>
-                    <h4 className="font-medium text-gray-900">Communications</h4>
-                    <p className="text-sm text-gray-500">Phone & internet</p>
-                  </div>
-                </div>
-              </button>
-              <button className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-left">
-                <div className="flex items-center space-x-3">
-                  <div className="p-2 bg-orange-100 rounded-lg">
-                    <Briefcase className="w-5 h-5 text-orange-600" />
-                  </div>
-                  <div>
-                    <h4 className="font-medium text-gray-900">Facilities</h4>
-                    <p className="text-sm text-gray-500">Office supplies</p>
-                  </div>
-                </div>
-              </button>
-              <button className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-left">
-                <div className="flex items-center space-x-3">
-                  <div className="p-2 bg-red-100 rounded-lg">
-                    <Mail className="w-5 h-5 text-red-600" />
-                  </div>
-                  <div>
-                    <h4 className="font-medium text-gray-900">Mail Services</h4>
-                    <p className="text-sm text-gray-500">Courier & postage</p>
-                  </div>
-                </div>
-              </button>
-              <button className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-left">
-                <div className="flex items-center space-x-3">
-                  <div className="p-2 bg-yellow-100 rounded-lg">
-                    <CreditCard className="w-5 h-5 text-yellow-600" />
-                  </div>
-                  <div>
-                    <h4 className="font-medium text-gray-900">Security</h4>
-                    <p className="text-sm text-gray-500">Access & safety</p>
-                  </div>
-                </div>
-              </button>
-            </div>
-            <div className="mt-6 pt-4 border-t border-gray-200">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h4 className="font-medium text-gray-900">Emergency Contact</h4>
-                  <p className="text-sm text-gray-500">For urgent office support needs</p>
-                </div>
-                <button className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
-                  Call Support
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+      {/* Office Support Form */}
+      {showOfficeSupportForm && (
+        <OfficeSupportRequestForm
+          onSave={(requestData) => {
+            handleAddOfficeSupportRequest(requestData);
+            setShowOfficeSupportForm(false);
+          }}
+          onCancel={() => setShowOfficeSupportForm(false)}
+          supportType={selectedSupportType}
+        />
       )}
     </div>
   );

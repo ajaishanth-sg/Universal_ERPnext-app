@@ -5,6 +5,10 @@ from bson import ObjectId
 
 router = APIRouter()
 
+@router.get("/test")
+async def test_dashboard():
+    return {"message": "Dashboard router is working", "status": "ok"}
+
 # Collections
 sales_collection = db.sales_invoices
 purchase_collection = db.purchase_invoices
@@ -95,77 +99,110 @@ async def get_accounting_dashboard():
 
 @router.get("/financial")
 async def get_financial_dashboard():
-    # Financial stats
-    # Total assets - this would need a proper assets calculation
-    total_assets = 0  # Placeholder
+    try:
+        # Financial stats
+        # Total assets - this would need a proper assets calculation
+        total_assets = 0  # Placeholder
 
-    # Monthly revenue
-    current_month = datetime.now().replace(day=1)
-    monthly_revenue_pipeline = [
-        {"$match": {
-            "status": "Submitted",
-            "date": {"$gte": current_month.isoformat()}
-        }},
-        {"$group": {"_id": None, "total": {"$sum": "$grandTotal"}}}
-    ]
-    revenue_result = await sales_collection.aggregate(monthly_revenue_pipeline).to_list(length=1)
-    monthly_revenue = revenue_result[0]["total"] if revenue_result else 0
+        # Monthly revenue
+        current_month = datetime.now().replace(day=1)
+        monthly_revenue_pipeline = [
+            {"$match": {
+                "status": "Submitted",
+                "date": {"$gte": current_month.isoformat()}
+            }},
+            {"$group": {"_id": None, "total": {"$sum": "$grandTotal"}}}
+        ]
 
-    # Outstanding payments
-    outstanding_payments = await accounts_payable_collection.aggregate([
-        {"$group": {"_id": None, "total": {"$sum": "$outstandingAmount"}}}
-    ]).to_list(length=1)
-    outstanding_payments_total = outstanding_payments[0]["total"] if outstanding_payments else 0
+        try:
+            revenue_result = await sales_collection.aggregate(monthly_revenue_pipeline).to_list(length=1)
+            monthly_revenue = revenue_result[0]["total"] if revenue_result else 0
+        except Exception as e:
+            print(f"Error in revenue aggregation: {e}")
+            monthly_revenue = 0
 
-    # Bank accounts count (placeholder)
-    bank_accounts_count = 0  # Would need bank accounts collection
+        # Outstanding payments
+        try:
+            outstanding_payments = await accounts_payable_collection.aggregate([
+                {"$group": {"_id": None, "total": {"$sum": "$outstandingAmount"}}}
+            ]).to_list(length=1)
+            outstanding_payments_total = outstanding_payments[0]["total"] if outstanding_payments else 0
+        except Exception as e:
+            print(f"Error in outstanding payments aggregation: {e}")
+            outstanding_payments_total = 0
 
-    # Recent transactions (last 10)
-    recent_sales = await sales_collection.find(
-        {"status": "Submitted"}
-    ).sort("date", -1).limit(5).to_list(length=None)
+        # Bank accounts count (placeholder)
+        bank_accounts_count = 0  # Would need bank accounts collection
 
-    recent_purchases = await purchase_collection.find(
-        {"status": "Submitted"}
-    ).sort("date", -1).limit(5).to_list(length=None)
+        # Recent transactions (last 10)
+        try:
+            recent_sales = await sales_collection.find(
+                {"status": "Submitted"}
+            ).sort("date", -1).limit(5).to_list(length=None)
+        except Exception as e:
+            print(f"Error fetching recent sales: {e}")
+            recent_sales = []
 
-    # Combine and sort
-    recent_transactions = []
-    for sale in recent_sales:
-        recent_transactions.append({
-            "id": str(sale["_id"]),
-            "type": "payment",
-            "description": f"Sale to {sale.get('customer', 'Customer')}",
-            "amount": sale["grandTotal"],
-            "date": sale["date"],
-            "status": "completed",
-            "account": "Sales"
-        })
+        try:
+            recent_purchases = await purchase_collection.find(
+                {"status": "Submitted"}
+            ).sort("date", -1).limit(5).to_list(length=None)
+        except Exception as e:
+            print(f"Error fetching recent purchases: {e}")
+            recent_purchases = []
 
-    for purchase in recent_purchases:
-        recent_transactions.append({
-            "id": str(purchase["_id"]),
-            "type": "transfer",
-            "description": f"Purchase from {purchase.get('supplier', 'Supplier')}",
-            "amount": purchase["grandTotal"],
-            "date": purchase["date"],
-            "status": "completed",
-            "account": "Purchases"
-        })
+        # Combine and sort
+        recent_transactions = []
+        for sale in recent_sales:
+            recent_transactions.append({
+                "id": str(sale["_id"]),
+                "type": "payment",
+                "description": f"Sale to {sale.get('customer', 'Customer')}",
+                "amount": sale["grandTotal"],
+                "date": sale["date"],
+                "status": "completed",
+                "account": "Sales"
+            })
 
-    recent_transactions.sort(key=lambda x: x["date"], reverse=True)
-    recent_transactions = recent_transactions[:10]
+        for purchase in recent_purchases:
+            recent_transactions.append({
+                "id": str(purchase["_id"]),
+                "type": "transfer",
+                "description": f"Purchase from {purchase.get('supplier', 'Supplier')}",
+                "amount": purchase["grandTotal"],
+                "date": purchase["date"],
+                "status": "completed",
+                "account": "Purchases"
+            })
 
-    return {
-        "stats": {
-            "totalAssets": total_assets,
-            "monthlyRevenue": monthly_revenue,
-            "outstandingPayments": outstanding_payments_total,
-            "bankAccounts": bank_accounts_count
-        },
-        "recentTransactions": recent_transactions,
-        "bankAccounts": []  # Placeholder
-    }
+        recent_transactions.sort(key=lambda x: x["date"], reverse=True)
+        recent_transactions = recent_transactions[:10]
+
+        return {
+            "stats": {
+                "totalAssets": total_assets,
+                "monthlyRevenue": monthly_revenue,
+                "outstandingPayments": outstanding_payments_total,
+                "bankAccounts": bank_accounts_count
+            },
+            "recentTransactions": recent_transactions,
+            "bankAccounts": []  # Placeholder
+        }
+    except Exception as e:
+        print(f"Error in financial dashboard: {e}")
+        import traceback
+        traceback.print_exc()
+        # Return default data if there's an error
+        return {
+            "stats": {
+                "totalAssets": 0,
+                "monthlyRevenue": 0,
+                "outstandingPayments": 0,
+                "bankAccounts": 0
+            },
+            "recentTransactions": [],
+            "bankAccounts": []
+        }
 
 @router.get("/operations")
 async def get_operations_dashboard():

@@ -23,6 +23,8 @@ import {
   Plane,
   Clock,
   ChevronDown,
+  DollarSign,
+  TrendingUp,
 } from "lucide-react";
 import React, { useState } from 'react';
 
@@ -53,6 +55,14 @@ const menuItems = [
       { id: "payables", label: "Payables" },
       { id: "receivables", label: "Receivables" },
       { id: "financial-reports", label: "Financial Reports" },
+    ],
+  },
+  {
+    id: "investment-management",
+    icon: TrendingUp,
+    label: "Investment Management",
+    submenu: [
+      { id: "capital-calls", label: "Capital Calls" },
     ],
   },
   // {

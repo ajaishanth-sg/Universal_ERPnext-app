@@ -42,10 +42,15 @@ const FinancialDashboard = ({ onNavigate, bankAccounts, recentTransactions, init
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
+        console.log('Fetching financial dashboard data...');
         const response = await fetch('http://localhost:5000/api/dashboard/financial');
+        console.log('Response status:', response.status);
         if (response.ok) {
           const data = await response.json();
+          console.log('Dashboard data received:', data);
           setDashboardData(data);
+        } else {
+          console.error('Failed to fetch dashboard data. Status:', response.status);
         }
       } catch (error) {
         console.error('Error fetching financial dashboard data:', error);
@@ -61,24 +66,32 @@ const FinancialDashboard = ({ onNavigate, bankAccounts, recentTransactions, init
   useEffect(() => {
     const fetchDebitCardsData = async () => {
       try {
+        console.log('Fetching debit cards data...');
         const [cardsResponse, alertsResponse, settingsResponse] = await Promise.all([
           fetch('http://localhost:5000/api/debit-cards/'),
           fetch('http://localhost:5000/api/debit-cards/alerts/'),
           fetch('http://localhost:5000/api/debit-cards/settings/')
         ]);
 
+        console.log('Cards response status:', cardsResponse.status);
+        console.log('Alerts response status:', alertsResponse.status);
+        console.log('Settings response status:', settingsResponse.status);
+
         if (cardsResponse.ok) {
           const cards = await cardsResponse.json();
+          console.log('Cards data received:', cards);
           setDebitCards(cards);
         }
 
         if (alertsResponse.ok) {
           const alerts = await alertsResponse.json();
+          console.log('Alerts data received:', alerts);
           setDebitCardAlerts(alerts);
         }
 
         if (settingsResponse.ok) {
           const settings = await settingsResponse.json();
+          console.log('Settings data received:', settings);
           setDebitCardSettings(settings);
         }
       } catch (error) {
