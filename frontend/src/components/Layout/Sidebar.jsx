@@ -63,7 +63,11 @@ const menuItems = [
     icon: TrendingUp,
     label: "Investment Management",
     submenu: [
+      { id: "funds", label: "Funds" },
+      { id: "investors", label: "Investors" },
+      { id: "commitment", label: "Commitment" },
       { id: "capital-calls", label: "Capital Calls" },
+      { id: "investment-alerts", label: "Alerts" },
     ],
   },
   // {
@@ -149,16 +153,16 @@ const menuItems = [
       { id: "payroll-reports", label: "Reports" },
     ],
   },
-  // {
-  //   id: "reports",
-  //   icon: FileText,
-  //   label: "Reports & Analytics",
-  // },
   {
     id: "settings",
     icon: Settings,
     label: "System Settings",
   },
+  // {
+  //   id: "reports",
+  //   icon: FileText,
+  //   label: "Reports & Analytics",
+  // },
 ];
 
 function Sidebar({ onNavigate, activeDashboard }) {
@@ -183,7 +187,8 @@ function Sidebar({ onNavigate, activeDashboard }) {
   // FIXED: Handle main item click for items with submenus
   const handleMainItemClick = (item) => {
     if (item.submenu) {
-      // Toggle expansion
+      // For items with submenus, first navigate to the main item, then toggle expansion
+      handleItemClick(item.id);
       toggleExpanded(item.id);
     } else {
       // Just navigate for items without submenus

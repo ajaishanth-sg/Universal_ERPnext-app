@@ -30,6 +30,8 @@ from routes.payroll_router import router as payroll_router
 from routes.predictive_maintenance_router import router as predictive_maintenance_router
 from routes.automated_payroll_journal_router import router as automated_payroll_journal_router
 from routes.chatbot_router import router as chatbot_router
+from routes.ai_service_router import router as ai_service_router
+from routes.settings_router import router as settings_router
 
 app = FastAPI()
 
@@ -76,6 +78,8 @@ app.include_router(payroll_router, prefix="/api/payroll", tags=["payroll"])
 app.include_router(predictive_maintenance_router, prefix="/api/predictive-maintenance", tags=["predictive_maintenance"])
 app.include_router(automated_payroll_journal_router, prefix="/api/automated-payroll-journal", tags=["automated_payroll_journal"])
 app.include_router(chatbot_router, prefix="/api/chatbot", tags=["chatbot"])
+app.include_router(ai_service_router, prefix="/api/ai", tags=["ai_service"])
+app.include_router(settings_router, prefix="/api/settings", tags=["settings"])
 
 @app.get("/weather")
 async def get_weather(

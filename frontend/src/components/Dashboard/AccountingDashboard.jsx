@@ -1,7 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
-const AccountingDashboard = ({ onNavigate }) => {
-  const [activeTab, setActiveTab] = useState('overview');
+const AccountingDashboard = ({ onNavigate, initialTab = 'overview' }) => {
+  const [activeTab, setActiveTab] = useState(initialTab);
+
+  // Update activeTab when initialTab changes
+  useEffect(() => {
+    setActiveTab(initialTab);
+  }, [initialTab]);
 
   const accountingData = {
     totalAssets: '$2,450,000',

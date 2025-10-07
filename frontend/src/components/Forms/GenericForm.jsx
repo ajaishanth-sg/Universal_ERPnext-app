@@ -218,7 +218,7 @@ const GenericForm = ({
                 ))}
               </div>
               <div className="flex items-center space-x-2">
-                <button className="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center space-x-2">
+                <button className="px-3 py-2 bg-[#1E3A5F] text-white rounded-md hover:bg-[#2C5F7F] flex items-center space-x-2">
                   <Filter className="w-4 h-4" />
                   <span>Filter</span>
                 </button>

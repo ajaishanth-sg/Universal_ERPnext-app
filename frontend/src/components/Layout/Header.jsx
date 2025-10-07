@@ -1,31 +1,8 @@
-import { Filter, Menu, Plus, Search, Bell, Settings, ChevronDown, CloudSun, Sun, Cloud, CloudRain, Search as SearchIcon, MapPin, Thermometer, Wind, Droplets, User, HelpCircle, LogOut, UserCog } from 'lucide-react';
+import { Filter, Menu, Search, Bell, Settings, ChevronDown, CloudSun, Sun, Cloud, CloudRain, Search as SearchIcon, MapPin, Thermometer, Wind, Droplets, User, HelpCircle, LogOut, UserCog } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
-// New Menu Component
-function NewMenu({ onNewAction }) {
-  const newOptions = [
-    { id: 1, label: "New Payment", icon: "💳" },
-    { id: 2, label: "New Employee", icon: "👤" },
-    { id: 3, label: "New Invoice", icon: "📄" }
-  ];
 
-  return (
-    <div className="p-4 rounded-xl shadow-md bg-white w-64 absolute top-full left-0 mt-2 z-10">
-      <h2 className="text-lg font-bold mb-2">Create New</h2>
-      {newOptions.map(option => (
-        <button
-          key={option.id}
-          onClick={() => onNewAction(option.id)}
-          className="w-full text-left py-2 px-3 hover:bg-gray-100 rounded-lg transition-colors flex items-center space-x-3"
-        >
-          <span>{option.icon}</span>
-          <span className="text-sm">{option.label}</span>
-        </button>
-      ))}
-    </div>
-  );
-}
 
 // Notification Widget Component
 function NotificationWidget() {
@@ -167,7 +144,6 @@ function ProfileDropdown({ onProfileAction }) {
 function Header({ currentDashboard = 'Executive Dashboard', onToggleSidebar, onNewAction }) {
   const [showWeather, setShowWeather] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
-  const [showNewMenu, setShowNewMenu] = useState(false);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [weatherData, setWeatherData] = useState(null);
   const [selectedCountry, setSelectedCountry] = useState('');
@@ -581,17 +557,7 @@ function Header({ currentDashboard = 'Executive Dashboard', onToggleSidebar, onN
 
         {/* Right */}
         <div className="flex items-center space-x-3">
-          <div className="relative hidden lg:block">
-            <button
-              onClick={() => setShowNewMenu(!showNewMenu)}
-              className="flex items-center space-x-2 py-2 px-4 bg-blue-900 text-white rounded-xl hover:bg-blue-800 hover:shadow-lg transition-all"
-            >
-              <Plus className="h-4 w-4" />
-              <span className="text-sm font-medium">New</span>
-            </button>
-            {showNewMenu && <NewMenu onNewAction={onNewAction} />}
-          </div>
-
+          {/* Weather Display */}
           <button
             onClick={() => setShowNotifications(!showNotifications)}
             className="relative p-2.5 rounded-xl text-gray-600 hover:bg-gray-100 transition-colors"
@@ -600,7 +566,6 @@ function Header({ currentDashboard = 'Executive Dashboard', onToggleSidebar, onN
             <span className="absolute -top-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">3</span>
           </button>
 
-          {/* Weather Display */}
           <button
             onClick={() => setShowWeather(!showWeather)}
             className="flex items-center space-x-2 px-3 py-2 rounded-xl text-gray-600 hover:bg-gray-100 transition-colors relative"
@@ -637,6 +602,7 @@ function Header({ currentDashboard = 'Executive Dashboard', onToggleSidebar, onN
           </div>
         </div>
       </div>
+
 
 
       {/* Notification Widget */}

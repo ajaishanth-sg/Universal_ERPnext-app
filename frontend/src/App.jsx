@@ -6,6 +6,7 @@ import ExecutiveDashboard from './components/Dashboard/ExecutiveDashboard';
 import FinancialDashboard from './components/Dashboard/FinancialDashboard';
 import AccountingDashboard from './components/Dashboard/AccountingDashboard';
 import FinancialReport from './components/Dashboard/FinancialReport';
+import ChartOfAccounts from './components/Dashboard/ChartOfAccounts';
 // Payables and Receivables
 import PayablesPage from './components/Dashboard/PayablesPage';
 import ReceivablesPage from './components/Dashboard/ReceivablesPage';
@@ -33,6 +34,7 @@ import CapitalCallDashboard from './components/Dashboard/CapitalCallDashboard';
 import EmailApprovalHandler from './components/EmailApprovalHandler';
 import PredictiveMaintenanceDashboard from './components/Dashboard/PredictiveMaintenanceDashboard';
 import PayrollManagementDashboard from './components/Dashboard/PayrollManagementDashboard';
+import SettingsDashboard from './components/Dashboard/SettingsDashboard';
 import Chatbot from './components/Chatbot';
 
 function App() {
@@ -126,12 +128,15 @@ function App() {
       case 'banking':
         return 'Banking Dashboard';
       case 'accounting':
+        return 'Accounting Dashboard';
       case 'chart-of-accounts':
+        return 'Chart of Accounts';
       case 'transactions':
       case 'invoices':
       case 'journal-entries':
+        return 'Journal Entries';
       case 'reports':
-        return 'Accounting Dashboard';
+        return 'Financial Reports';
       case 'payables':
         return 'Payables';
       case 'receivables':
@@ -191,6 +196,18 @@ function App() {
         return 'Journal Entries';
       case 'payroll-reports':
         return 'Reports';
+      case 'funds':
+        return 'Funds Management';
+      case 'investors':
+        return 'Investor Management';
+      case 'commitment':
+        return 'Investment Commitments';
+      case 'capital-calls':
+        return 'Capital Calls';
+      case 'investment-alerts':
+        return 'Investment Alerts';
+      case 'settings':
+        return 'System Settings';
       default:
         return 'Executive Dashboard';
     }
@@ -209,12 +226,15 @@ function App() {
       case 'banking':
         return <FinancialDashboard bankAccounts={bankAccounts} recentTransactions={recentTransactions} onNavigate={setActiveDashboard} initialTab='banking' />;
       case 'accounting':
+        return <AccountingDashboard onNavigate={setActiveDashboard} initialTab='overview' />;
       case 'chart-of-accounts':
+        return <ChartOfAccounts />;
       case 'transactions':
       case 'invoices':
       case 'journal-entries':
+        return <AccountingDashboard onNavigate={setActiveDashboard} initialTab='journal-entries' />;
       case 'reports':
-        return <AccountingDashboard onNavigate={setActiveDashboard} />;
+        return <FinancialReport onBack={() => setActiveDashboard('accounting')} />;
       case 'payables':
         return <PayablesPage onBack={() => setActiveDashboard('accounting')} />;
       case 'receivables':
@@ -271,8 +291,16 @@ function App() {
         return <TravelCoordinationDashboard onBack={() => setActiveDashboard('racing-operations')} />;
       case 'logistics':
         return <LogisticsDashboard onBack={() => setActiveDashboard('racing-operations')} />;
+      case 'funds':
+        return <CapitalCallDashboard onNavigate={setActiveDashboard} initialTab="funds" />;
+      case 'investors':
+        return <CapitalCallDashboard onNavigate={setActiveDashboard} initialTab="investors" />;
+      case 'commitment':
+        return <CapitalCallDashboard onNavigate={setActiveDashboard} initialTab="commitment" />;
       case 'capital-calls':
-        return <CapitalCallDashboard onNavigate={setActiveDashboard} />;
+        return <CapitalCallDashboard onNavigate={setActiveDashboard} initialTab="capital-calls" />;
+      case 'investment-alerts':
+        return <CapitalCallDashboard onNavigate={setActiveDashboard} initialTab="alerts" />;
       case 'predictive-maintenance':
         return <PredictiveMaintenanceDashboard onNavigate={setActiveDashboard} />;
       case 'payroll-management':
@@ -283,6 +311,8 @@ function App() {
         return <PayrollManagementDashboard onNavigate={setActiveDashboard} initialTab="journals" />;
       case 'payroll-reports':
         return <PayrollManagementDashboard onNavigate={setActiveDashboard} initialTab="reports" />;
+      case 'settings':
+        return <SettingsDashboard onNavigate={setActiveDashboard} />;
       default:
         return <ExecutiveDashboard />;
     }
