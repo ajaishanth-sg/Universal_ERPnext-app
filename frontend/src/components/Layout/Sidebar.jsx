@@ -25,6 +25,7 @@ import {
   ChevronDown,
   DollarSign,
   TrendingUp,
+  User,
 } from "lucide-react";
 import React, { useState } from 'react';
 
@@ -136,16 +137,16 @@ const menuItems = [
     label: "Maintenance",
     submenu: [
       { id: "predictive-maintenance", label: "Predictive Maintenance" },
-      { id: "fleet-maintenance", label: "Fleet Maintenance" },
     ],
   },
   {
-    id: "payroll",
+    id: "payroll-management",
     icon: Calculator,
-    label: "Payroll",
+    label: "Payroll Management",
     submenu: [
-      { id: "payroll-management", label: "Payroll Management" },
-      { id: "employee-management", label: "Employee Management" },
+      { id: "payroll-periods", label: "Payroll Periods" },
+      { id: "payroll-journal-entries", label: "Journal Entries" },
+      { id: "payroll-reports", label: "Reports" },
     ],
   },
   // {
@@ -204,12 +205,14 @@ function Sidebar({ onNavigate, activeDashboard }) {
         style={{ borderColor: "rgba(255, 255, 255, 0.1)" }}
       >
         <div className="flex items-center space-x-3">
-          <div
-            className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg"
+          <button
+            onClick={() => onNavigate && onNavigate('dashboard')}
+            className="w-10 h-10 rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50"
             style={{ backgroundColor: "#FFFFFF" }}
+            title="Go to Home Dashboard"
           >
-            <Zap className="w-6 h-6" style={{ color: "#1E3A5F" }} />
-          </div>
+            <User className="w-6 h-6" style={{ color: "#1E3A5F" }} />
+          </button>
           <div>
             <h1 className="text-xl font-bold" style={{ color: "#FFFFFF" }}>
               UniverseERP
@@ -289,30 +292,6 @@ function Sidebar({ onNavigate, activeDashboard }) {
         })}
       </nav>
 
-      <div
-        className="p-4 border-t"
-        style={{ borderColor: "rgba(255, 255, 255, 0.1)" }}
-      >
-        <div
-          className="flex items-center space-x-3 p-3 rounded-xl"
-          style={{ backgroundColor: "rgba(255, 255, 255, 0.1)" }}
-        >
-          <img
-            src="https://images.pexels.com/photos/1681010/pexels-photo-1681010.jpeg?auto=compress&cs=tinysrgb&cs=tinysrgb&w=64&h=64&dpr=2"
-            alt="user"
-            className="w-10 h-10 rounded-full ring-2"
-            style={{ borderColor: "#FFFFFF" }}
-          />
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium" style={{ color: "#FFFFFF" }}>
-              Chairman
-            </p>
-            <p className="text-xs" style={{ color: "rgba(255, 255, 255, 0.7)" }}>
-              admin@familyoffice.com
-            </p>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }

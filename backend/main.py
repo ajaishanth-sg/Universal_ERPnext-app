@@ -27,12 +27,23 @@ from routes.email_approval_router import router as email_approval_router
 from routes.capital_call_router import router as capital_call_router
 from routes.maintenance_alert_router import router as maintenance_alert_router
 from routes.payroll_router import router as payroll_router
+from routes.predictive_maintenance_router import router as predictive_maintenance_router
+from routes.automated_payroll_journal_router import router as automated_payroll_journal_router
+from routes.chatbot_router import router as chatbot_router
 
 app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "http://localhost:3000",
+        "http://localhost:5173",
+        "http://localhost:5000",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:5173",
+        "http://127.0.0.1:5000",
+        "*"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -62,6 +73,9 @@ app.include_router(email_approval_router, prefix="/api/email-approvals", tags=["
 app.include_router(capital_call_router, prefix="/api/capital-calls", tags=["capital_calls"])
 app.include_router(maintenance_alert_router, prefix="/api/maintenance-alerts", tags=["maintenance_alerts"])
 app.include_router(payroll_router, prefix="/api/payroll", tags=["payroll"])
+app.include_router(predictive_maintenance_router, prefix="/api/predictive-maintenance", tags=["predictive_maintenance"])
+app.include_router(automated_payroll_journal_router, prefix="/api/automated-payroll-journal", tags=["automated_payroll_journal"])
+app.include_router(chatbot_router, prefix="/api/chatbot", tags=["chatbot"])
 
 @app.get("/weather")
 async def get_weather(

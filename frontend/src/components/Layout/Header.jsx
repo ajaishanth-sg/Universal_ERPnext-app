@@ -1,4 +1,4 @@
-import { Filter, Menu, Plus, Search, Bell, Settings, ChevronDown, CloudSun, Sun, Cloud, CloudRain, Search as SearchIcon, MapPin, Thermometer, Wind, Droplets } from 'lucide-react';
+import { Filter, Menu, Plus, Search, Bell, Settings, ChevronDown, CloudSun, Sun, Cloud, CloudRain, Search as SearchIcon, MapPin, Thermometer, Wind, Droplets, User, HelpCircle, LogOut, UserCog } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
@@ -133,11 +133,42 @@ function WeatherWidget({ weather, selectedCountry, setSelectedCountry, onCountry
   );
 }
 
+// Profile Dropdown Component
+function ProfileDropdown({ onProfileAction }) {
+  const profileOptions = [
+    { id: 'profile', label: 'View Profile', icon: User },
+    { id: 'settings', label: 'Account Settings', icon: UserCog },
+    { id: 'help', label: 'Help & Support', icon: HelpCircle },
+    { id: 'signout', label: 'Sign Out', icon: LogOut }
+  ];
+
+  return (
+    <div className="profile-dropdown absolute right-0 top-full mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
+      <div className="py-2">
+        {profileOptions.map(option => {
+          const Icon = option.icon;
+          return (
+            <button
+              key={option.id}
+              onClick={() => onProfileAction(option.id)}
+              className="w-full flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+            >
+              <Icon className="w-4 h-4" />
+              <span>{option.label}</span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 // Header Component
 function Header({ currentDashboard = 'Executive Dashboard', onToggleSidebar, onNewAction }) {
   const [showWeather, setShowWeather] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showNewMenu, setShowNewMenu] = useState(false);
+  const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [weatherData, setWeatherData] = useState(null);
   const [selectedCountry, setSelectedCountry] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
@@ -457,6 +488,29 @@ function Header({ currentDashboard = 'Executive Dashboard', onToggleSidebar, onN
     setSelectedCountry(country);
   };
 
+  const handleProfileAction = (action) => {
+    setShowProfileDropdown(false);
+
+    switch (action) {
+      case 'profile':
+        alert('View Profile - Feature coming soon!');
+        break;
+      case 'settings':
+        alert('Account Settings - Feature coming soon!');
+        break;
+      case 'help':
+        alert('Help & Support - You can access help through the chatbot or contact support!');
+        break;
+      case 'signout':
+        if (window.confirm('Are you sure you want to sign out?')) {
+          alert('Sign Out - Feature coming soon!');
+        }
+        break;
+      default:
+        break;
+    }
+  };
+
   // Get user's location on mount (simulated)
   useEffect(() => {
     // Simulate geolocation - in real app, use navigator.geolocation
@@ -476,6 +530,20 @@ function Header({ currentDashboard = 'Executive Dashboard', onToggleSidebar, onN
       });
     }, 1000);
   }, []);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showProfileDropdown && !event.target.closest('.profile-dropdown')) {
+        setShowProfileDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showProfileDropdown]);
 
   return (
     <div className="bg-white border-b border-gray-200 px-6 py-4 relative">
@@ -547,17 +615,25 @@ function Header({ currentDashboard = 'Executive Dashboard', onToggleSidebar, onN
           </button>
 
           {/* Profile */}
-          <div className="flex items-center space-x-3 pl-3 border-l border-gray-200">
-            <img
-              src="https://images.pexels.com/photos/1681010/pexels-photo-1681010.jpeg?auto=compress&cs=tinysrgb&cs=tinysrgb&w=64&h=64&dpr=2"
-              alt="User"
-              className="w-8 h-8 rounded-full ring-2 ring-blue-500"
-            />
-            <div className="hidden md:block">
-              <p className="text-sm font-medium text-gray-900">Chairman</p>
-              <p className="text-xs text-gray-500">Family Office</p>
-            </div>
-            <ChevronDown className="h-4 w-4 text-gray-400" />
+          <div className="relative">
+            <button
+              onClick={() => setShowProfileDropdown(!showProfileDropdown)}
+              className="flex items-center space-x-3 pl-3 border-l border-gray-200 hover:bg-gray-50 rounded-lg p-2 transition-colors"
+            >
+              <div
+                className="w-8 h-8 rounded-full ring-2 ring-blue-500 flex items-center justify-center"
+                style={{ backgroundColor: "#FFFFFF" }}
+              >
+                <User className="w-4 h-4" style={{ color: "#1E3A5F" }} />
+              </div>
+              <div className="hidden md:block">
+                <p className="text-sm font-medium text-gray-900">Chairman</p>
+                <p className="text-xs text-gray-500">admin@familyoffice.com</p>
+              </div>
+              <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform duration-200 ${showProfileDropdown ? 'rotate-180' : ''}`} />
+            </button>
+
+            {showProfileDropdown && <ProfileDropdown onProfileAction={handleProfileAction} />}
           </div>
         </div>
       </div>

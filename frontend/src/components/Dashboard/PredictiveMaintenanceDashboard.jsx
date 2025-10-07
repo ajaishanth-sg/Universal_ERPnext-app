@@ -1,573 +1,427 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import {
-  AlertTriangle,
-  TrendingUp,
-  CheckCircle,
-  Clock,
-  Wrench,
-  Car,
-  Settings,
-  Activity,
-  Plus,
-  Eye,
-  RefreshCw,
-  Zap
-} from 'lucide-react';
+import { AlertTriangle, TrendingUp, Calendar, DollarSign, Wrench, CheckCircle, Clock, AlertCircle } from 'lucide-react';
 
-const PredictiveMaintenanceDashboard = () => {
-  const [activeTab, setActiveTab] = useState('overview');
+const PredictiveMaintenanceDashboard = ({ onNavigate }) => {
   const [alerts, setAlerts] = useState([]);
-  const [healthScores, setHealthScores] = useState([]);
+  const [summary, setSummary] = useState({});
   const [loading, setLoading] = useState(true);
+  const [selectedPriority, setSelectedPriority] = useState('all');
+  const [generatingPredictions, setGeneratingPredictions] = useState(false);
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [selectedAlert, setSelectedAlert] = useState(null);
+  const [scheduling, setScheduling] = useState(false);
 
-  // Fetch data on component mount
   useEffect(() => {
     fetchMaintenanceData();
   }, []);
 
   const fetchMaintenanceData = async () => {
     try {
-      const [alertsResponse, healthResponse] = await Promise.all([
-        axios.get('http://localhost:5000/api/maintenance-alerts/alerts'),
-        axios.get('http://localhost:5000/api/maintenance-alerts/health-scores')
+      setLoading(true);
+      const [alertsResponse, summaryResponse] = await Promise.all([
+        axios.get('http://localhost:5000/api/predictive-maintenance/alerts'),
+        axios.get('http://localhost:5000/api/predictive-maintenance/dashboard-summary')
       ]);
 
-      setAlerts(alertsResponse.data || []);
-      setHealthScores(healthResponse.data || []);
-    } catch (err) {
-      console.error('Error fetching maintenance data:', err);
+      setAlerts(alertsResponse.data);
+      setSummary(summaryResponse.data);
+    } catch (error) {
+      console.error('Error fetching maintenance data:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const analyzeVehicles = async () => {
+  const generatePredictions = async () => {
     try {
-      setLoading(true);
-      await axios.post('http://localhost:5000/api/maintenance-alerts/analyze-vehicles');
-      // Refresh data after analysis
-      await fetchMaintenanceData();
-    } catch (err) {
-      console.error('Error analyzing vehicles:', err);
+      setGeneratingPredictions(true);
+      await axios.post('http://localhost:5000/api/predictive-maintenance/alerts/generate-predictions');
+      await fetchMaintenanceData(); // Refresh data
+    } catch (error) {
+      console.error('Error generating predictions:', error);
+      alert('Error generating predictions. Please try again.');
     } finally {
-      setLoading(false);
+      setGeneratingPredictions(false);
     }
   };
 
-  const maintenanceStats = [
-    {
-      title: "Critical Alerts",
-      value: alerts.filter(alert => alert.severity === 'critical').length.toString(),
-      change: "+2",
-      icon: AlertTriangle,
-      color: "from-red-500 to-red-600"
-    },
-    {
-      title: "Health Score",
-      value: healthScores.length > 0 ? (healthScores.reduce((sum, score) => sum + score.overallScore, 0) / healthScores.length).toFixed(0) : "85",
-      change: "+5%",
-      icon: Activity,
-      color: "from-green-500 to-emerald-600"
-    },
-    {
-      title: "Assets Monitored",
-      value: healthScores.length.toString(),
-      change: "+3",
-      icon: Car,
-      color: "from-blue-500 to-cyan-600"
-    },
-    {
-      title: "Alerts This Month",
-      value: alerts.filter(alert => {
-        const alertDate = new Date(alert.createdAt);
-        const now = new Date();
-        return alertDate.getMonth() === now.getMonth();
-      }).length.toString(),
-      change: "+12",
-      icon: TrendingUp,
-      color: "from-purple-500 to-violet-600"
+  const handleScheduleMaintenance = (alert) => {
+    setSelectedAlert(alert);
+    setShowScheduleModal(true);
+  };
+
+  const scheduleMaintenance = async (scheduleData) => {
+    try {
+      setScheduling(true);
+      await axios.post('http://localhost:5000/api/predictive-maintenance/alerts/schedule', {
+        alertId: selectedAlert.id,
+        ...scheduleData
+      });
+
+      setShowScheduleModal(false);
+      setSelectedAlert(null);
+      await fetchMaintenanceData(); // Refresh data
+      alert('Maintenance scheduled successfully!');
+    } catch (error) {
+      console.error('Error scheduling maintenance:', error);
+      alert('Error scheduling maintenance. Please try again.');
+    } finally {
+      setScheduling(false);
     }
-  ];
+  };
 
-  // Transform health scores data for display
-  const assetHealthData = healthScores.map((score, index) => ({
-    id: score.id || index + 1,
-    assetName: `Asset ${score.assetId}`,
-    assetType: score.assetType,
-    healthScore: Math.round(score.overallScore),
-    trend: score.trend,
-    lastMaintenance: score.lastCalculated ? new Date(score.lastCalculated).toLocaleDateString() : 'Unknown',
-    nextMaintenance: 'TBD',
-    alerts: alerts.filter(alert => alert.assetId === score.assetId).length
-  }));
+  const filteredAlerts = selectedPriority === 'all'
+    ? alerts
+    : alerts.filter(alert => alert.priority.toLowerCase() === selectedPriority.toLowerCase());
 
-  const recentAlerts = alerts.slice(0, 5).map(alert => ({
-    id: alert.id,
-    assetName: alert.assetName,
-    severity: alert.severity,
-    title: alert.title,
-    description: alert.description,
-    predictedDate: alert.predictedFailureDate,
-    status: alert.status
-  }));
+  const getPriorityColor = (priority) => {
+    switch (priority.toLowerCase()) {
+      case 'critical': return 'text-red-600 bg-red-100';
+      case 'high': return 'text-orange-600 bg-orange-100';
+      case 'medium': return 'text-yellow-600 bg-yellow-100';
+      case 'low': return 'text-green-600 bg-green-100';
+      default: return 'text-gray-600 bg-gray-100';
+    }
+  };
 
-  const tabs = [
-    { id: 'overview', label: 'Overview' },
-    { id: 'alerts', label: 'Alerts' },
-    { id: 'health', label: 'Asset Health' },
-    { id: 'predictions', label: 'Predictions' }
-  ];
+  const getStatusIcon = (status) => {
+    switch (status.toLowerCase()) {
+      case 'predicted': return <AlertTriangle className="w-4 h-4" />;
+      case 'scheduled': return <Calendar className="w-4 h-4" />;
+      case 'in_progress': return <Clock className="w-4 h-4" />;
+      case 'completed': return <CheckCircle className="w-4 h-4" />;
+      default: return <AlertCircle className="w-4 h-4" />;
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
 
   return (
-    <div className="p-6 space-y-6 bg-white min-h-full text-black">
+    <div className="p-6 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">Predictive Maintenance</h1>
-          <p className="text-gray-600 mt-1">AI-powered maintenance alerts and asset health monitoring</p>
+          <p className="text-gray-600">AI-powered maintenance predictions and alerts</p>
         </div>
         <button
-          onClick={analyzeVehicles}
-          disabled={loading}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center space-x-2 disabled:opacity-50"
+          onClick={generatePredictions}
+          disabled={generatingPredictions}
+          className={`px-4 py-2 rounded-lg flex items-center space-x-2 ${
+            generatingPredictions
+              ? 'bg-gray-400 cursor-not-allowed text-white'
+              : 'bg-blue-600 hover:bg-blue-700 text-white'
+          }`}
         >
-          <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-          <span>{loading ? 'Analyzing...' : 'Analyze Assets'}</span>
+          <TrendingUp className={`w-4 h-4 ${generatingPredictions ? 'animate-spin' : ''}`} />
+          <span>{generatingPredictions ? 'Generating...' : 'Generate Predictions'}</span>
         </button>
       </div>
 
-      {/* Tabs */}
-      <div className="border-b border-gray-200">
-        <nav className="flex space-x-8">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
-                activeTab === tab.id
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </nav>
-      </div>
-
-      {/* Stats Grid */}
+      {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {maintenanceStats.map((stat, index) => {
-          const Icon = stat.icon;
-          return (
-            <div key={index} className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">
-                    {stat.title}
-                  </p>
-                  <p className="text-2xl font-bold text-gray-800 mt-1">
-                    {stat.value}
-                  </p>
-                  <p className={`text-sm mt-1 ${
-                    stat.change.startsWith('+') ? 'text-green-600' : 'text-red-600'
-                  }`}>
-                    {stat.change}
-                  </p>
-                </div>
-                <div className={`w-12 h-12 bg-gradient-to-r ${stat.color} rounded-lg flex items-center justify-center`}>
-                  <Icon className="w-6 h-6 text-white" />
-                </div>
-              </div>
+        <div className="bg-white p-6 rounded-lg shadow-sm border">
+          <div className="flex items-center">
+            <div className="p-2 bg-red-100 rounded-lg">
+              <AlertTriangle className="w-6 h-6 text-red-600" />
             </div>
-          );
-        })}
-      </div>
-
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Asset Health Overview */}
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-800">
-              Asset Health Overview
-            </h2>
-            <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">
-              View All
-            </button>
-          </div>
-          <div className="space-y-4">
-            {assetHealthData.map((asset) => (
-              <div key={asset.id} className="p-4 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-sm font-medium text-gray-800">
-                    {asset.assetName}
-                  </h3>
-                  <div className="flex items-center space-x-2">
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                      asset.healthScore >= 80 ? 'bg-green-100 text-green-800' :
-                      asset.healthScore >= 60 ? 'bg-yellow-100 text-yellow-800' :
-                      'bg-red-100 text-red-800'
-                    }`}>
-                      {asset.healthScore}% Health
-                    </span>
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                      asset.trend === 'improving' ? 'bg-green-100 text-green-800' :
-                      asset.trend === 'declining' ? 'bg-red-100 text-red-800' :
-                      'bg-gray-100 text-gray-800'
-                    }`}>
-                      {asset.trend}
-                    </span>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-2 text-xs text-gray-500">
-                  <div className="flex items-center space-x-1">
-                    <Settings className="w-3 h-3" />
-                    <span>{asset.assetType}</span>
-                  </div>
-                  <div className="flex items-center space-x-1">
-                    <Clock className="w-3 h-3" />
-                    <span>Next: {asset.nextMaintenance}</span>
-                  </div>
-                  <div className="flex items-center space-x-1">
-                    <CheckCircle className="w-3 h-3" />
-                    <span>Last: {asset.lastMaintenance}</span>
-                  </div>
-                  <div className="flex items-center space-x-1">
-                    <AlertTriangle className="w-3 h-3" />
-                    <span>{asset.alerts} Alerts</span>
-                  </div>
-                </div>
-                <div className="mt-3">
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div
-                      className={`h-2 rounded-full ${
-                        asset.healthScore >= 80 ? 'bg-green-500' :
-                        asset.healthScore >= 60 ? 'bg-yellow-500' :
-                        'bg-red-500'
-                      }`}
-                      style={{ width: `${asset.healthScore}%` }}
-                    ></div>
-                  </div>
-                </div>
-              </div>
-            ))}
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-600">Total Alerts</p>
+              <p className="text-2xl font-bold text-gray-900">{summary.totalAlerts || 0}</p>
+            </div>
           </div>
         </div>
 
-        {/* Recent Alerts */}
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-800">
-              Recent Alerts
-            </h2>
-            <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">
-              View All
-            </button>
+        <div className="bg-white p-6 rounded-lg shadow-sm border">
+          <div className="flex items-center">
+            <div className="p-2 bg-orange-100 rounded-lg">
+              <AlertCircle className="w-6 h-6 text-orange-600" />
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-600">Critical Alerts</p>
+              <p className="text-2xl font-bold text-gray-900">{summary.criticalAlerts || 0}</p>
+            </div>
           </div>
-          <div className="space-y-4">
-            {recentAlerts.length > 0 ? (
-              recentAlerts.map((alert) => (
-                <div key={alert.id} className="p-4 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-sm font-medium text-gray-800">
-                      {alert.title}
-                    </h3>
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                      alert.severity === 'critical' ? 'bg-red-100 text-red-800' :
-                      alert.severity === 'high' ? 'bg-orange-100 text-orange-800' :
-                      alert.severity === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                      'bg-green-100 text-green-800'
-                    }`}>
-                      {alert.severity}
-                    </span>
-                  </div>
-                  <p className="text-sm text-gray-600 mb-2">
-                    {alert.assetName}
-                  </p>
-                  <p className="text-xs text-gray-500 mb-2">
-                    {alert.description}
-                  </p>
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-gray-500">Due: {alert.predictedDate}</span>
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                      alert.status === 'active' ? 'bg-blue-100 text-blue-800' :
-                      alert.status === 'acknowledged' ? 'bg-yellow-100 text-yellow-800' :
-                      'bg-green-100 text-green-800'
-                    }`}>
-                      {alert.status}
-                    </span>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="text-center py-8">
-                <CheckCircle className="w-12 h-12 text-green-400 mx-auto mb-4" />
-                <p className="text-gray-500">No recent alerts</p>
-                <p className="text-sm text-gray-400 mt-1">All assets are operating normally</p>
-              </div>
-            )}
+        </div>
+
+        <div className="bg-white p-6 rounded-lg shadow-sm border">
+          <div className="flex items-center">
+            <div className="p-2 bg-blue-100 rounded-lg">
+              <Calendar className="w-6 h-6 text-blue-600" />
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-600">Scheduled</p>
+              <p className="text-2xl font-bold text-gray-900">{summary.scheduledAlerts || 0}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white p-6 rounded-lg shadow-sm border">
+          <div className="flex items-center">
+            <div className="p-2 bg-green-100 rounded-lg">
+              <CheckCircle className="w-6 h-6 text-green-600" />
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-600">Completed</p>
+              <p className="text-2xl font-bold text-gray-900">{summary.completedAlerts || 0}</p>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Alerts Tab */}
-      {activeTab === 'alerts' && (
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-800">Maintenance Alerts</h2>
-            <button className="px-3 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center space-x-2">
-              <Plus className="w-4 h-4" />
-              <span>Create Alert</span>
-            </button>
-          </div>
-
-          {/* Alert Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-            <div className="p-4 rounded-lg bg-red-50 border border-red-200">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-red-500 rounded-lg flex items-center justify-center">
-                  <AlertTriangle className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Critical</p>
-                  <p className="text-xl font-bold text-gray-800">
-                    {alerts.filter(alert => alert.severity === 'critical').length}
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="p-4 rounded-lg bg-orange-50 border border-orange-200">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center">
-                  <Clock className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-600">High Priority</p>
-                  <p className="text-xl font-bold text-gray-800">
-                    {alerts.filter(alert => alert.severity === 'high').length}
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="p-4 rounded-lg bg-yellow-50 border border-yellow-200">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-yellow-500 rounded-lg flex items-center justify-center">
-                  <Activity className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Medium Priority</p>
-                  <p className="text-xl font-bold text-gray-800">
-                    {alerts.filter(alert => alert.severity === 'medium').length}
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="p-4 rounded-lg bg-green-50 border border-green-200">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
-                  <CheckCircle className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Resolved</p>
-                  <p className="text-xl font-bold text-gray-800">
-                    {alerts.filter(alert => alert.status === 'resolved').length}
-                  </p>
-                </div>
-              </div>
+      {/* Filters and Alerts List */}
+      <div className="bg-white rounded-lg shadow-sm border">
+        <div className="p-6 border-b">
+          <div className="flex justify-between items-center">
+            <h2 className="text-lg font-semibold text-gray-900">Maintenance Alerts</h2>
+            <div className="flex space-x-2">
+              <select
+                value={selectedPriority}
+                onChange={(e) => setSelectedPriority(e.target.value)}
+                className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
+              >
+                <option value="all">All Priorities</option>
+                <option value="critical">Critical</option>
+                <option value="high">High</option>
+                <option value="medium">Medium</option>
+                <option value="low">Low</option>
+              </select>
             </div>
           </div>
+        </div>
 
-          {/* Alert List */}
-          <div className="space-y-4">
-            {alerts.length > 0 ? (
-              alerts.map((alert) => (
-                <div key={alert.id} className="p-4 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-sm font-medium text-gray-800">
-                      {alert.title}
-                    </h3>
-                    <div className="flex items-center space-x-2">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                        alert.severity === 'critical' ? 'bg-red-100 text-red-800' :
-                        alert.severity === 'high' ? 'bg-orange-100 text-orange-800' :
-                        alert.severity === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                        'bg-green-100 text-green-800'
-                      }`}>
-                        {alert.severity}
-                      </span>
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                        alert.status === 'active' ? 'bg-blue-100 text-blue-800' :
-                        alert.status === 'acknowledged' ? 'bg-yellow-100 text-yellow-800' :
-                        'bg-green-100 text-green-800'
-                      }`}>
-                        {alert.status}
-                      </span>
+        <div className="divide-y divide-gray-200">
+          {filteredAlerts.length === 0 ? (
+            <div className="p-6 text-center text-gray-500">
+              No maintenance alerts found
+            </div>
+          ) : (
+            filteredAlerts.map((alert) => (
+              <div key={alert.id} className="p-6 hover:bg-gray-50">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-start space-x-4">
+                    <div className="flex-shrink-0">
+                      {getStatusIcon(alert.status)}
                     </div>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <p className="text-gray-600"><strong>Asset:</strong> {alert.assetName}</p>
-                      <p className="text-gray-600"><strong>Type:</strong> {alert.alertType.replace('_', ' ')}</p>
-                      <p className="text-gray-600"><strong>Confidence:</strong> {alert.confidence}%</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-600"><strong>Predicted Date:</strong> {alert.predictedFailureDate}</p>
-                      <p className="text-gray-600"><strong>Action:</strong> {alert.recommendedAction}</p>
-                      {alert.estimatedCost && (
-                        <p className="text-gray-600"><strong>Est. Cost:</strong> ${alert.estimatedCost.toLocaleString()}</p>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center space-x-2 mb-2">
+                        <p className="text-sm font-medium text-gray-900">
+                          {alert.assetName}
+                        </p>
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getPriorityColor(alert.priority)}`}>
+                          {alert.priority}
+                        </span>
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                          {alert.assetType}
+                        </span>
+                      </div>
+
+                      <p className="text-sm text-gray-600 mb-2">
+                        {alert.failureDescription}
+                      </p>
+
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-500">
+                        <div>
+                          <span className="font-medium">Predicted Date:</span>
+                          <br />
+                          {new Date(alert.predictedFailureDate).toLocaleDateString()}
+                        </div>
+                        <div>
+                          <span className="font-medium">Confidence:</span>
+                          <br />
+                          {alert.confidenceLevel}%
+                        </div>
+                        <div>
+                          <span className="font-medium">Component:</span>
+                          <br />
+                          {alert.failureComponent}
+                        </div>
+                        <div>
+                          <span className="font-medium">Est. Cost:</span>
+                          <br />
+                          ${alert.estimatedCost || 'N/A'}
+                        </div>
+                      </div>
+
+                      {alert.licensePlate && (
+                        <div className="mt-2 text-sm text-gray-500">
+                          <span className="font-medium">License Plate:</span> {alert.licensePlate}
+                        </div>
                       )}
                     </div>
                   </div>
-                  <p className="text-sm text-gray-500 mt-2">{alert.description}</p>
-                  <div className="mt-3 pt-3 border-t border-gray-200">
-                    <div className="flex items-center justify-between">
-                      <button className="text-blue-600 hover:text-blue-700 text-xs font-medium">
-                        View Details
-                      </button>
-                      <div className="flex space-x-2">
-                        <button className="text-green-600 hover:text-green-700 text-xs font-medium">
-                          Acknowledge
-                        </button>
-                        <button className="text-gray-600 hover:text-gray-700 text-xs font-medium">
-                          Resolve
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="text-center py-8">
-                <CheckCircle className="w-12 h-12 text-green-400 mx-auto mb-4" />
-                <p className="text-gray-500">No maintenance alerts</p>
-                <p className="text-sm text-gray-400 mt-1">Run analysis to check asset health</p>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
 
-      {/* Asset Health Tab */}
-      {activeTab === 'health' && (
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-800">Asset Health Scores</h2>
-            <button className="px-3 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center space-x-2">
-              <Activity className="w-4 h-4" />
-              <span>Recalculate All</span>
-            </button>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {assetHealthData.map((asset) => (
-              <div key={asset.id} className="p-4 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-sm font-medium text-gray-800">
-                    {asset.assetName}
-                  </h3>
-                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                    asset.trend === 'improving' ? 'bg-green-100 text-green-800' :
-                    asset.trend === 'declining' ? 'bg-red-100 text-red-800' :
-                    'bg-gray-100 text-gray-800'
-                  }`}>
-                    {asset.trend}
-                  </span>
-                </div>
-
-                <div className="mb-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm text-gray-600">Health Score</span>
-                    <span className="text-sm font-medium text-gray-800">{asset.healthScore}%</span>
+                  <div className="flex-shrink-0 ml-4">
+                    <button
+                      onClick={() => handleScheduleMaintenance(alert)}
+                      className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm flex items-center space-x-1"
+                    >
+                      <Wrench className="w-3 h-3" />
+                      <span>Schedule</span>
+                    </button>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-3">
-                    <div
-                      className={`h-3 rounded-full transition-all duration-300 ${
-                        asset.healthScore >= 80 ? 'bg-green-500' :
-                        asset.healthScore >= 60 ? 'bg-yellow-500' :
-                        'bg-red-500'
-                      }`}
-                      style={{ width: `${asset.healthScore}%` }}
-                    ></div>
-                  </div>
-                </div>
-
-                <div className="space-y-2 text-xs text-gray-500">
-                  <div className="flex items-center space-x-2">
-                    <Settings className="w-3 h-3" />
-                    <span>{asset.assetType}</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Clock className="w-3 h-3" />
-                    <span>Next: {asset.nextMaintenance}</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <CheckCircle className="w-3 h-3" />
-                    <span>Last: {asset.lastMaintenance}</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <AlertTriangle className="w-3 h-3" />
-                    <span>{asset.alerts} Active Alerts</span>
-                  </div>
-                </div>
-
-                <div className="mt-4 pt-3 border-t border-gray-200">
-                  <button className="w-full text-blue-600 hover:text-blue-700 text-xs font-medium">
-                    View Details
-                  </button>
                 </div>
               </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Predictions Tab */}
-      {activeTab === 'predictions' && (
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-800">Maintenance Predictions</h2>
-            <button className="px-3 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center space-x-2">
-              <Zap className="w-4 h-4" />
-              <span>Generate Predictions</span>
-            </button>
-          </div>
-
-          <div className="text-center py-8">
-            <TrendingUp className="w-12 h-12 text-blue-400 mx-auto mb-4" />
-            <p className="text-gray-500">Advanced prediction models coming soon</p>
-            <p className="text-sm text-gray-400 mt-1">Machine learning algorithms will predict maintenance needs</p>
-          </div>
-        </div>
-      )}
-
-      {/* Quick Actions */}
-      <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-        <h2 className="text-lg font-semibold text-gray-800 mb-4">
-          Quick Actions
-        </h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <button className="p-4 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors text-center">
-            <Activity className="w-6 h-6 text-blue-600 mx-auto mb-2" />
-            <p className="text-sm font-medium text-gray-800">Run Analysis</p>
-          </button>
-          <button className="p-4 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors text-center">
-            <AlertTriangle className="w-6 h-6 text-orange-600 mx-auto mb-2" />
-            <p className="text-sm font-medium text-gray-800">Create Alert</p>
-          </button>
-          <button className="p-4 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors text-center">
-            <Car className="w-6 h-6 text-green-600 mx-auto mb-2" />
-            <p className="text-sm font-medium text-gray-800">Add Asset</p>
-          </button>
-          <button className="p-4 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors text-center">
-            <Settings className="w-6 h-6 text-purple-600 mx-auto mb-2" />
-            <p className="text-sm font-medium text-gray-800">Configure Models</p>
-          </button>
+            ))
+          )}
         </div>
       </div>
 
+      {/* Schedule Maintenance Modal */}
+      {showScheduleModal && selectedAlert && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold">Schedule Maintenance</h3>
+              <button
+                onClick={() => setShowScheduleModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="mb-4">
+              <p className="text-sm text-gray-600 mb-2">
+                <strong>Asset:</strong> {selectedAlert.assetName}
+              </p>
+              <p className="text-sm text-gray-600 mb-2">
+                <strong>Component:</strong> {selectedAlert.failureComponent}
+              </p>
+              <p className="text-sm text-gray-600">
+                <strong>Priority:</strong>
+                <span className={`ml-1 px-2 py-1 rounded-full text-xs ${getPriorityColor(selectedAlert.priority)}`}>
+                  {selectedAlert.priority}
+                </span>
+              </p>
+            </div>
+
+            <ScheduleForm
+              onSubmit={scheduleMaintenance}
+              onCancel={() => setShowScheduleModal(false)}
+              loading={scheduling}
+            />
+          </div>
+        </div>
+      )}
     </div>
+  );
+};
+
+// Schedule Form Component
+const ScheduleForm = ({ onSubmit, onCancel, loading }) => {
+  const [formData, setFormData] = useState({
+    scheduledDate: '',
+    technician: '',
+    notes: '',
+    estimatedHours: ''
+  });
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (formData.scheduledDate && formData.technician) {
+      onSubmit(formData);
+    } else {
+      alert('Please fill in all required fields');
+    }
+  };
+
+  const handleChange = (field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Scheduled Date *
+        </label>
+        <input
+          type="datetime-local"
+          value={formData.scheduledDate}
+          onChange={(e) => handleChange('scheduledDate', e.target.value)}
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          required
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Technician/Team *
+        </label>
+        <select
+          value={formData.technician}
+          onChange={(e) => handleChange('technician', e.target.value)}
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          required
+        >
+          <option value="">Select Technician</option>
+          <option value="John Smith">John Smith</option>
+          <option value="Mike Johnson">Mike Johnson</option>
+          <option value="Sarah Wilson">Sarah Wilson</option>
+          <option value="David Brown">David Brown</option>
+          <option value="External Contractor">External Contractor</option>
+        </select>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Estimated Hours
+        </label>
+        <input
+          type="number"
+          value={formData.estimatedHours}
+          onChange={(e) => handleChange('estimatedHours', e.target.value)}
+          placeholder="e.g., 2.5"
+          min="0"
+          step="0.5"
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Notes
+        </label>
+        <textarea
+          value={formData.notes}
+          onChange={(e) => handleChange('notes', e.target.value)}
+          placeholder="Additional notes or special instructions..."
+          rows="3"
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+      </div>
+
+      <div className="flex space-x-3 pt-4">
+        <button
+          type="submit"
+          disabled={loading}
+          className={`flex-1 py-2 px-4 rounded-lg text-white text-sm font-medium ${
+            loading
+              ? 'bg-gray-400 cursor-not-allowed'
+              : 'bg-green-600 hover:bg-green-700'
+          }`}
+        >
+          {loading ? 'Scheduling...' : 'Schedule Maintenance'}
+        </button>
+        <button
+          type="button"
+          onClick={onCancel}
+          className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+        >
+          Cancel
+        </button>
+      </div>
+    </form>
   );
 };
 

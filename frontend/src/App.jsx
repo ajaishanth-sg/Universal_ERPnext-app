@@ -33,9 +33,11 @@ import CapitalCallDashboard from './components/Dashboard/CapitalCallDashboard';
 import EmailApprovalHandler from './components/EmailApprovalHandler';
 import PredictiveMaintenanceDashboard from './components/Dashboard/PredictiveMaintenanceDashboard';
 import PayrollManagementDashboard from './components/Dashboard/PayrollManagementDashboard';
+import Chatbot from './components/Chatbot';
 
 function App() {
   const [activeDashboard, setActiveDashboard] = useState('dashboard');
+  const [sidebarVisible, setSidebarVisible] = useState(true);
 
   const bankAccounts = [
     {
@@ -106,6 +108,10 @@ function App() {
       account: "Investment"
     }
   ];
+
+  const toggleSidebar = () => {
+    setSidebarVisible(!sidebarVisible);
+  };
 
   const getDashboardName = () => {
     switch (activeDashboard) {
@@ -179,6 +185,12 @@ function App() {
         return 'Predictive Maintenance';
       case 'payroll-management':
         return 'Payroll Management';
+      case 'payroll-periods':
+        return 'Payroll Periods';
+      case 'payroll-journal-entries':
+        return 'Journal Entries';
+      case 'payroll-reports':
+        return 'Reports';
       default:
         return 'Executive Dashboard';
     }
@@ -257,16 +269,20 @@ function App() {
         return <RacingPaymentsDashboard onBack={() => setActiveDashboard('racing-operations')} />;
       case 'travel-coordination':
         return <TravelCoordinationDashboard onBack={() => setActiveDashboard('racing-operations')} />;
-        case 'logistics':
+      case 'logistics':
         return <LogisticsDashboard onBack={() => setActiveDashboard('racing-operations')} />;
-      case 'travel-desk':
-        return <TravelDeskDashboard />;
       case 'capital-calls':
         return <CapitalCallDashboard onNavigate={setActiveDashboard} />;
       case 'predictive-maintenance':
         return <PredictiveMaintenanceDashboard onNavigate={setActiveDashboard} />;
       case 'payroll-management':
         return <PayrollManagementDashboard onNavigate={setActiveDashboard} />;
+      case 'payroll-periods':
+        return <PayrollManagementDashboard onNavigate={setActiveDashboard} initialTab="periods" />;
+      case 'payroll-journal-entries':
+        return <PayrollManagementDashboard onNavigate={setActiveDashboard} initialTab="journals" />;
+      case 'payroll-reports':
+        return <PayrollManagementDashboard onNavigate={setActiveDashboard} initialTab="reports" />;
       default:
         return <ExecutiveDashboard />;
     }
@@ -275,14 +291,21 @@ function App() {
   return (
     <div className="min-h-screen bg-gray-50 transition-all duration-500">
       <div className="flex h-screen overflow-hidden">
-        <Sidebar onNavigate={setActiveDashboard} activeDashboard={activeDashboard} />
-        <div className="flex-1 flex flex-col overflow-hidden bg-white">
-          <Header currentDashboard={getDashboardName()} />
+        {sidebarVisible && (
+          <Sidebar onNavigate={setActiveDashboard} activeDashboard={activeDashboard} />
+        )}
+        <div className={`flex-1 flex flex-col overflow-hidden bg-white transition-all duration-300 ${!sidebarVisible ? 'ml-0' : ''}`}>
+          <Header
+            currentDashboard={getDashboardName()}
+            onToggleSidebar={toggleSidebar}
+          />
           <main className="flex-1 overflow-y-auto bg-gray-50">
             {renderDashboard()}
           </main>
         </div>
       </div>
+      {/* Chatbot Component */}
+      <Chatbot />
     </div>
   );
 }

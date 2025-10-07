@@ -1,0 +1,303 @@
+{
+  "system_overview": {
+    "name": "UniverserERP",
+    "description": "A comprehensive Enterprise Resource Planning system designed for managing various business operations including financial management, human resources, fleet management, operations, and more.",
+    "modules": [
+      "Financial Management",
+      "Human Resources (HR)",
+      "Fleet Management",
+      "Operations Management",
+      "Housing Management",
+      "Maintenance Management",
+      "Inventory Management",
+      "Payroll Management",
+      "Accounts Payable/Receivable",
+      "Capital Calls Management",
+      "Email Approval System",
+      "Debit Card Management",
+      "Travel Coordination",
+      "Team Management",
+      "Abroad Staff Management",
+      "Racing Payments",
+      "Shipment Management",
+      "Vehicle Management",
+      "Driver Management",
+      "Purchase/Sales Invoices",
+      "SPV Company Management",
+      "Maintenance Scheduling",
+      "Predictive Maintenance",
+      "Automated Payroll Journal",
+      "Chatbot Assistant"
+    ]
+  },
+  "module_details": {
+    "financial_management": {
+      "name": "Financial Management",
+      "description": "Comprehensive financial tracking, reporting, and analysis system",
+      "features": [
+        "Financial dashboard with real-time metrics",
+        "General ledger management",
+        "Cost center tracking",
+        "Financial reporting and analytics",
+        "Budget management",
+        "Cash flow analysis",
+        "Profit and loss statements",
+        "Balance sheet generation",
+        "Financial forecasting"
+      ],
+      "common_questions": [
+        "How do I view my financial dashboard?",
+        "How to generate a financial report?",
+        "Where can I see cash flow statements?",
+        "How to manage cost centers?",
+        "How to create budget reports?"
+      ],
+      "responses": {
+        "dashboard": "You can access the Financial Dashboard from the main navigation sidebar. It provides real-time insights into your financial metrics, cash flow, profit/loss, and key financial indicators.",
+        "reports": "To generate financial reports, navigate to the Financial Dashboard and look for the Reports section. You can create profit & loss statements, balance sheets, cash flow reports, and custom financial analytics.",
+        "cost_centers": "Cost center management is available in the Financial Dashboard. You can create, edit, and track different cost centers, allocate expenses, and monitor cost center performance."
+      }
+    },
+    "hr_management": {
+      "name": "Human Resources Management",
+      "description": "Complete HR management system for employee data, payroll, and personnel management",
+      "features": [
+        "Employee database management",
+        "Payroll processing",
+        "Leave management",
+        "Attendance tracking",
+        "Performance management",
+        "Recruitment tracking",
+        "Employee onboarding/offboarding",
+        "HR analytics and reporting"
+      ],
+      "common_questions": [
+        "How do I add a new employee?",
+        "How to process payroll?",
+        "Where can I manage leave requests?",
+        "How to view employee performance?",
+        "How to generate HR reports?"
+      ],
+      "responses": {
+        "add_employee": "To add a new employee, go to the HR Dashboard and click on 'Add Employee' or 'Employee Management'. Fill in the required details including personal information, job details, salary, and department.",
+        "payroll": "Payroll processing is handled through the Payroll Management Dashboard. You can process monthly payroll, view payslips, manage deductions, and handle tax calculations.",
+        "leave_management": "Leave requests can be managed in the HR Dashboard under the 'Leave Management' section. Employees can submit requests, and managers can approve or reject them with proper workflow."
+      }
+    },
+    "fleet_management": {
+      "name": "Fleet Management",
+      "description": "Comprehensive vehicle fleet management and tracking system",
+      "features": [
+        "Vehicle registration and tracking",
+        "Maintenance scheduling",
+        "Fuel consumption monitoring",
+        "Driver assignment",
+        "GPS tracking integration",
+        "Fleet analytics",
+        "Cost management",
+        "Compliance tracking"
+      ],
+      "common_questions": [
+        "How do I add a new vehicle?",
+        "How to schedule maintenance?",
+        "Where can I track fuel consumption?",
+        "How to assign drivers to vehicles?",
+        "How to view fleet reports?"
+      ],
+      "responses": {
+        "add_vehicle": "To add a new vehicle, navigate to Fleet Management Dashboard and click 'Add Vehicle'. Enter vehicle details including make, model, registration number, purchase date, and specifications.",
+        "maintenance": "Maintenance scheduling is available in the Maintenance Dashboard. You can create scheduled maintenance tasks, track maintenance history, and set up automated reminders.",
+        "fuel_tracking": "Fuel consumption tracking is part of the Fleet Management Dashboard. Monitor fuel usage, costs, and efficiency across your entire fleet."
+      }
+    },
+    "housing_management": {
+      "name": "Housing Management",
+      "description": "Property and housing management for company-owned or managed properties",
+      "features": [
+        "Property database",
+        "Tenant management",
+        "Rent collection",
+        "Maintenance requests",
+        "Lease management",
+        "Property analytics",
+        "Occupancy tracking"
+      ],
+      "common_questions": [
+        "How do I add a new property?",
+        "How to manage tenant information?",
+        "Where can I track rent payments?",
+        "How to handle maintenance requests?",
+        "How to generate property reports?"
+      ],
+      "responses": {
+        "add_property": "To add a new property, go to Housing Management Dashboard and select 'Add Property'. Enter property details, location, specifications, and rental information.",
+        "tenant_management": "Tenant management is handled through the Housing Dashboard. You can add tenants, track lease agreements, and manage tenant communications.",
+        "rent_collection": "Rent collection and payment tracking is available in the Financial Dashboard under Accounts Receivable, specifically for housing-related income."
+      }
+    },
+    "inventory_management": {
+      "name": "Inventory Management",
+      "description": "Stock tracking, procurement, and warehouse management system",
+      "features": [
+        "Stock level monitoring",
+        "Purchase order management",
+        "Supplier management",
+        "Warehouse tracking",
+        "Inventory reports",
+        "Low stock alerts",
+        "Barcode integration"
+      ],
+      "common_questions": [
+        "How do I check stock levels?",
+        "How to create a purchase order?",
+        "Where can I manage suppliers?",
+        "How to set up low stock alerts?",
+        "How to generate inventory reports?"
+      ],
+      "responses": {
+        "stock_levels": "Stock levels can be monitored in real-time through the Inventory Dashboard. View current stock, minimum levels, and get alerts for low inventory items.",
+        "purchase_orders": "To create purchase orders, go to Inventory Management and select 'Purchase Orders'. You can create new orders, track existing ones, and manage supplier relationships.",
+        "suppliers": "Supplier management is available in the Inventory Dashboard. Add new suppliers, track supplier performance, and manage supplier communications."
+      }
+    },
+    "maintenance_management": {
+      "name": "Maintenance Management",
+      "description": "Comprehensive maintenance tracking and scheduling system",
+      "features": [
+        "Maintenance request management",
+        "Preventive maintenance scheduling",
+        "Work order tracking",
+        "Maintenance history",
+        "Cost tracking",
+        "Vendor management",
+        "Predictive maintenance alerts"
+      ],
+      "common_questions": [
+        "How do I submit a maintenance request?",
+        "How to schedule preventive maintenance?",
+        "Where can I track maintenance costs?",
+        "How to view maintenance history?",
+        "How to set up predictive maintenance?"
+      ],
+      "responses": {
+        "maintenance_request": "To submit a maintenance request, use the Maintenance Dashboard and click 'New Request'. Describe the issue, assign priority, and track progress through completion.",
+        "preventive_scheduling": "Preventive maintenance scheduling is available in the Maintenance Scheduling Dashboard. Set up recurring maintenance tasks based on time, usage, or condition.",
+        "cost_tracking": "Maintenance costs are tracked in the Maintenance Dashboard. View cost breakdowns, analyze maintenance expenses, and generate cost reports."
+      }
+    },
+    "accounts_payable": {
+      "name": "Accounts Payable",
+      "description": "Vendor payment management and accounts payable processing",
+      "features": [
+        "Vendor management",
+        "Invoice processing",
+        "Payment scheduling",
+        "Cash flow management",
+        "Aging reports",
+        "Payment approvals",
+        "Vendor analytics"
+      ],
+      "common_questions": [
+        "How do I add a new vendor?",
+        "How to process vendor invoices?",
+        "Where can I schedule payments?",
+        "How to generate aging reports?",
+        "How to approve payments?"
+      ],
+      "responses": {
+        "add_vendor": "To add a new vendor, go to Accounts Payable section and select 'Vendor Management'. Enter vendor details, payment terms, and contact information.",
+        "invoice_processing": "Invoice processing is handled through the Accounts Payable Dashboard. Upload invoices, match to purchase orders, and schedule payments.",
+        "payment_scheduling": "Payment scheduling can be managed in the Accounts Payable section. Set up automatic payments, approve pending payments, and manage cash flow."
+      }
+    },
+    "accounts_receivable": {
+      "name": "Accounts Receivable",
+      "description": "Customer payment tracking and accounts receivable management",
+      "features": [
+        "Customer management",
+        "Invoice generation",
+        "Payment tracking",
+        "Collection management",
+        "Aging analysis",
+        "Customer statements",
+        "Revenue reports"
+      ],
+      "common_questions": [
+        "How do I add a new customer?",
+        "How to generate customer invoices?",
+        "Where can I track payments?",
+        "How to send customer statements?",
+        "How to manage collections?"
+      ],
+      "responses": {
+        "add_customer": "To add a new customer, navigate to Accounts Receivable and select 'Customer Management'. Enter customer details, credit terms, and contact information.",
+        "invoice_generation": "Invoice generation is available in the Sales Invoice section. Create invoices, track payments, and manage customer billing cycles.",
+        "payment_tracking": "Payment tracking is handled through the Accounts Receivable Dashboard. Monitor incoming payments, track outstanding amounts, and manage collections."
+      }
+    }
+  },
+  "navigation_guide": {
+    "main_dashboard": "The main dashboard provides an overview of all ERP modules with key metrics and quick access to frequently used features.",
+    "sidebar_navigation": "Use the sidebar to navigate between different modules: Financial, HR, Fleet, Operations, Maintenance, and more.",
+    "search_functionality": "Most dashboards include search functionality to quickly find specific records, transactions, or reports.",
+    "keyboard_shortcuts": "Use common shortcuts like Ctrl+F for search, F5 to refresh data, and Esc to close modal windows."
+  },
+  "common_workflows": {
+    "new_employee_onboarding": "1. Add employee in HR Dashboard\n2. Set up payroll information\n3. Assign to department/cost center\n4. Configure system access permissions",
+    "monthly_payroll": "1. Review timesheets in HR Dashboard\n2. Process payroll in Payroll Management\n3. Generate payslips\n4. Handle tax calculations and deductions",
+    "maintenance_request": "1. Submit request via Maintenance Dashboard\n2. Assign to technician\n3. Track progress and updates\n4. Complete and record costs",
+    "financial_reporting": "1. Navigate to Financial Dashboard\n2. Select report type (P&L, Balance Sheet, etc.)\n3. Choose date range and filters\n4. Generate and export report"
+  },
+  "conversational_patterns": {
+    "greetings": {
+      "patterns": ["hi", "hello", "hey", "good morning", "good afternoon", "good evening", "howdy", "greetings"],
+      "responses": [
+        "Hello! I'm your UniverserERP assistant. I can help you with Financial Management, HR, Fleet Operations, Maintenance, Inventory, and all other modules. What would you like to know?",
+        "Hi there! I'm here to help you navigate and use your UniverserERP system effectively. You can ask me about any module or feature.",
+        "Hello! I have comprehensive knowledge about UniverserERP. Feel free to ask me about financial management, HR processes, fleet operations, or any other module."
+      ]
+    },
+    "payment_help": {
+      "patterns": ["payment help", "help with payments", "payment assistance", "how to make payment", "payment process", "billing help"],
+      "responses": [
+        "I can help you with payment-related questions in UniverserERP! You can access payment features through:\n\n• Financial Dashboard > Accounts Payable (for outgoing payments)\n• Financial Dashboard > Accounts Receivable (for incoming payments)\n• Payroll Management (for salary payments)\n• Racing Payments (for racing-related payments)\n\nWhat specific type of payment assistance do you need?",
+        "For payment help in UniverserERP, you have several options:\n\n💳 **Accounts Payable** - Manage vendor payments and invoices\n💰 **Accounts Receivable** - Track customer payments\n💸 **Payroll** - Handle employee salary payments\n🏁 **Racing Payments** - Manage racing-related transactions\n\nWhich payment area would you like help with?"
+      ]
+    },
+    "financial_queries": {
+      "patterns": ["financial help", "accounting help", "financial assistance", "accounting queries", "financial questions", "money help"],
+      "responses": [
+        "I can assist you with financial and accounting questions in UniverserERP! The Financial Management module includes:\n\n📊 **Financial Dashboard** - Real-time financial metrics and KPIs\n📈 **General Ledger** - Complete accounting records\n💼 **Cost Centers** - Track expenses by department\n📋 **Financial Reports** - P&L, Balance Sheet, Cash Flow\n\nWhat specific financial area would you like to explore?",
+        "For financial and accounting assistance, UniverserERP offers:\n\n• **Financial Dashboard** - Overview of all financial metrics\n• **Accounts Payable** - Vendor payment management\n• **Accounts Receivable** - Customer payment tracking\n• **Financial Reporting** - Generate various financial statements\n• **Budget Management** - Track and manage budgets\n\nWhat would you like help with?"
+      ]
+    },
+    "thanks_responses": {
+      "patterns": ["thank you", "thanks", "thankyou", "thx", "appreciate it"],
+      "responses": [
+        "You're welcome! I'm always here to help with your UniverserERP questions. Feel free to ask about any module or feature.",
+        "Happy to help! If you need assistance with Financial Management, HR, Fleet Operations, or any other module, just let me know.",
+        "My pleasure! I'm your UniverserERP assistant - ask me anything about the system!"
+      ]
+    },
+    "goodbye_responses": {
+      "patterns": ["bye", "goodbye", "see you", "farewell", "good night"],
+      "responses": [
+        "Goodbye! Remember, I'm here whenever you need help with UniverserERP. Have a great day!",
+        "See you later! Feel free to return anytime you need assistance with Financial Management, HR, Fleet Operations, or any other module.",
+        "Farewell! I'm always available to help you navigate and use your UniverserERP system effectively."
+      ]
+    }
+  },
+  "troubleshooting": {
+    "cannot_access_module": "If you cannot access a specific module, check your user permissions in the system settings or contact your administrator.",
+    "data_not_loading": "If dashboard data is not loading, try refreshing the page (F5) or check your internet connection.",
+    "report_generation_fails": "For report generation issues, ensure all required fields are filled and check data permissions for the selected date range.",
+    "slow_performance": "If the system is running slowly, try clearing your browser cache or contact support for server optimization."
+  },
+  "best_practices": {
+    "data_entry": "Always ensure data accuracy when entering information. Use consistent naming conventions and double-check important fields.",
+    "regular_backups": "Regular data backups are crucial. The system automatically backs up daily, but manual backups are recommended before major changes.",
+    "user_training": "Ensure all users receive proper training on their respective modules to maximize system efficiency and data accuracy.",
+    "regular_audits": "Conduct regular data audits to maintain data integrity and identify any discrepancies early."
+  }
+}

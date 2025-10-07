@@ -151,5 +151,15 @@ except Exception as e:
             self.team_members = MockCollection()
             self.travel_trips = MockCollection()
             self.vehicles = MockCollection()
+            # New collections for predictive maintenance
+            self.predictive_maintenance_alerts = MockCollection()
+            self.maintenance_prediction_config = MockCollection()
+            self.maintenance_analytics = MockCollection()
+            # New collections for automated payroll journal
+            self.payroll_journal_batches = MockCollection()
+            self.journal_entries = MockCollection()
+            # Additional collections for maintenance alerts
+            self.maintenance_predictions = MockCollection()
+            self.asset_health_scores = MockCollection()
 
     db = MockDB()
